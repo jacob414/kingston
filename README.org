@@ -1,0 +1,250 @@
+* micropy
+
+My little lib of Python goodies
+
+Micropy is auto-formatted using [[https://github.com/google/yapf][yapf]].
+
+** Nice things
+
+*** dig()
+
+CSS selector like deep value grabbing from almost any object.
+
+#+BEGIN_SRC python
+>>> from micropy import dig
+>>> dig.xget((1, 2, 3), 1)
+2
+>>> dig.xget({'foo': 'bar'}, 'foo')
+'bar'
+>>> dig.dig({'foo': 1, 'bar': [1,2,3]}, 'bar.1')
+2
+>>> dig.dig({'foo': 1, 'bar': [1,{'baz':'jox'},3]}, 'bar.1.baz')
+'jox'
+>>>
+#+END_SRC
+
+The difference between =dig.dig()= and =funcy.get_in()= is that you
+can use shell-like blob patterns to get several values keyed by
+similar names:
+
+#+BEGIN_SRC python
+>>> from micropy import dig
+>>> res = dig.dig({'foo': 1, 'foop': 2}, 'f*')
+>>> res
+[foo=1:int, foop=2:int]
+>>> # (textual representation of an indexable object)
+>>> res[0]
+foo=1:int
+>>> res[1]
+foop=2:int
+>>>
+#+END_SRC
+
+
+*** Programmatic class creation
+
+Programmatic creation of arbitrary named classes in module definition,
+add methods using a decorator notation:
+
+#+BEGIN_SRC python
+>>> from micropy import lang
+>>> mystuff = (('Foo', 1), ('Bar', 2))
+>>> for name, num in mystuff: locals()[name] = lang.mkclass(name, **{'num': num})
+>>> Foo
+<class 'micropy.lang.Foo'>
+>>> Foo.num
+1
+>>> \
+... @Foo.classmethod
+... def myclassmethod(cls, x):
+...     return x + 1
+>>> Foo.myclassmethod(1)
+2
+>>>
+>>> \
+... @Foo.staticmethod
+... def mystaticmethod(x, y):
+...     return x + y
+>>> Foo.mystaticmethod(1, 2)
+3
+>>> \
+... @Foo.method
+... def mymethod(self, x):
+...     self.y = self.num + x
+...     return self.y
+>>> foo = Foo()
+>>> foo.mymethod(1)
+2
+>>> foo.y
+2
+>>>
+#+END_SRC
+
+*** micropy module with developer convenience tools
+
+The =micropy.microscope= module contains utilities that aid
+development. It has to ways to inspect live objects:
+
+
+**** Via 'AbneuYAML'
+
+AbneuYAML is /“Almost, but not entirely unlike YAML”/. Objects dumped
+to ‘AbneuYAML’ should be easy to get a visual overview of for humans.
+
+To dump any object:
+
+#+BEGIN_SRC python
+>>> from micropy import microscope
+>>> class Cls: pass
+...
+>>> c = Cls()
+>>> c.foo, c.bar = 1, 2
+>>> c.sub = Cls()
+>>> c.sub.foo, c.sub.bar, c.sub.baz = 3, 4, [1, 2]
+>>> encoded = microscope.abneuyaml(c)
+>>> print(encoded) #doctest: +ELLIPSIS
+<__main__.Cls object at 0x...>:Cls
+  foo=1:int
+  bar=2:int
+  sub=<__main__.Cls object at 0x...>:Cls
+    foo=3:int
+    bar=4:int
+    baz=[1, 2]:list
+>>>
+#+END_SRC
+
+
+** A simple way of creating small DSL's using Python operator overloading.
+
+#+BEGIN_SRC python
+>>> from micropy import lang
+>>> \
+... class PipingExample(lang.Piping):
+...     def __add__(self, value) -> lang.Piping:
+...         self.queue(lambda a, b: a + b, value)
+...         return self
+...
+>>> simplest_pipe = PipingExample(10)
+>>> res = simplest_pipe + 10 + 20
+>>> res()
+40
+>>>
+#+END_SRC
+
+Mostly, you'll want to use the pipe operator to define simple
+composition:
+
+#+BEGIN_SRC python
+>>> from micropy import lang
+>>> incr = lambda x: x + 1
+>>> showr = "It is {}!".format
+>>> (lang.ComposePiping(5) >> incr >> incr >> showr)()
+'It is 7!'
+>>>
+#+END_SRC
+
+** 'Call by type' convenience objects
+
+#+BEGIN_SRC python
+>>> from micropy import lang
+>>> foo = lang.Match({int: lambda x: x*100, str: lambda x: f'Hello {x}'})
+>>> foo(10)
+1000
+>>> foo('bar')
+'Hello bar'
+>>>
+#+END_SRC
+
+** Narrowable collections
+
+Uses indexes to narrow collections to fewer values. You can narrow by
+type, a predicate function or value equality. The return value is
+always a new =Narrowable= derived type from the initial
+value. Therefore, you can chain several narrowing operations in the
+same expression.
+
+Errors raised by the narrowing predicates are considered misses.
+
+Some examples:
+
+*** Narrow by type
+
+#+BEGIN_SRC python
+>>> from micropy.primitives import narrowable
+>>> narrowable((1,2,3,'foo', 'bar'))[int]
+(1, 2, 3)
+>>>
+#+END_SRC
+
+*** Narrow by callable
+
+#+BEGIN_SRC python
+>>> from micropy.primitives import narrowable
+>>> narrowable((1, 2, 3))[lambda x: x > 1]
+(2, 3)
+>>>
+>>> narrowable((1,2,3,'foo', 'bar'))[int]
+(1, 2, 3)
+>>> narrowable((1,2,3,'foo', 'bar'))[lambda x: x > 1]
+(2, 3)
+>>> # Note, swallows ValueError raised by 'foo' > 1 etc
+>>>
+#+END_SRC
+
+*** Supress empty iterable objects
+
+#+BEGIN_SRC python
+>>> from micropy.primitives import narrowable
+>>> narrowable([[1], [2], [], []])[lambda x: x[0]]
+[[1], [2]]
+>>>
+#+END_SRC
+
+*** Narrow using exact match
+
+#+BEGIN_SRC python
+>>> from micropy.primitives import narrowable
+>>> narrowable((1, 2, 3, 'foo'))['foo']
+('foo',)
+>>>
+#+END_SRC
+
+*** Narrow using a regexp
+
+#+BEGIN_SRC python
+>>> from micropy.primitives import narrowable
+>>> import re
+>>> narrowable(('foo', 'fom', 'jox', 8, 'fim'))[re.compile('fo.*').match]
+('foo', 'fom')
+>>>
+#+END_SRC
+
+*** Combine
+
+#+BEGIN_SRC python
+>>> from micropy.primitives import narrowable
+>>> narrowable((1,2,3,'foo', 'bar'))[str]['foo']
+('foo',)
+>>>
+#+END_SRC
+
+** Go deeper
+
+#+BEGIN_SRC python
+>>> from micropy.primitives import narrowable
+>>> narrowable((1, 2, 3, (41, 42, 43)))[tuple][0][lambda x: x > 41]
+(42, 43)
+>>>
+#+END_SRC
+
+*** No matches found
+
+If no element matches, an empty version of the collection parameter
+will be returned:
+
+#+BEGIN_SRC python
+>>> from micropy.primitives import narrowable
+>>> narrowable((1,2,3))[lambda x: x > 3]
+()
+>>>
+#+END_SRC
