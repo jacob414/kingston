@@ -4,8 +4,8 @@ import pytest
 
 from altered import E
 
-from micropy import dig
-from micropy import testing
+from kingston import dig
+from kingston import testing
 
 from hypothesis import given
 from hypothesis import strategies as st

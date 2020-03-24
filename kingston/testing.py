@@ -43,7 +43,7 @@ class ReviewProject(distutils.cmd.Command):  # pragma: nocov
         print('     pyflakes...')
         warn, err = io.StringIO(), io.StringIO()
         code = pyflakes.api.checkRecursive(
-            ['micropy'],  # package directory
+            ['kingston'],  # package directory
             pyflakes.reporter.Reporter(warningStream=warn, errorStream=err))
         return (code, warn.getvalue(), err.getvalue())
 

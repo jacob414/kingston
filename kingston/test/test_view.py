@@ -1,6 +1,6 @@
 # yapf
 
-from micropy import view
+from kingston import view
 
 
 def test_view_single():

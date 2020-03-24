@@ -1,8 +1,10 @@
-* micropy
+* Funcy Kingston
 
-My little lib of Python goodies
+I use the excellent [[https://funcy.readthedocs.io/][Funcy]] library for Python a lot. This is my
+collection of extras that I have designed to work closely together
+with funcy. Funcy Kingston (Reference, see [[https://youtu.be/U79o7qwul48][here]]).
 
-Micropy is auto-formatted using [[https://github.com/google/yapf][yapf]].
+Kingston is auto-formatted using [[https://github.com/google/yapf][yapf]].
 
 ** Nice things
 
@@ -11,7 +13,7 @@ Micropy is auto-formatted using [[https://github.com/google/yapf][yapf]].
 CSS selector like deep value grabbing from almost any object.
 
 #+BEGIN_SRC python
->>> from micropy import dig
+>>> from kingston import dig
 >>> dig.xget((1, 2, 3), 1)
 2
 >>> dig.xget({'foo': 'bar'}, 'foo')
@@ -28,7 +30,7 @@ can use shell-like blob patterns to get several values keyed by
 similar names:
 
 #+BEGIN_SRC python
->>> from micropy import dig
+>>> from kingston import dig
 >>> res = dig.dig({'foo': 1, 'foop': 2}, 'f*')
 >>> res
 [foo=1:int, foop=2:int]
@@ -40,6 +42,114 @@ foop=2:int
 >>>
 #+END_SRC
 
+** Pattern matching using extended =dict='s
+
+#+BEGIN_SRC python
+>>> from kingston import lang
+>>> foo = lang.Match({int: lambda x: x*100, str: lambda x: f'Hello {x}'})
+>>> foo(10)
+1000
+>>> foo('bar')
+'Hello bar'
+>>>
+#+END_SRC
+
+
+
+** Narrowable collections
+
+Uses indexes to narrow collections to fewer values. You can narrow by
+type, a predicate function or value equality. The return value is
+always a new =Narrowable= derived type from the initial
+value. Therefore, you can chain several narrowing operations in the
+same expression.
+
+Errors raised by the narrowing predicates are considered misses.
+
+Some examples:
+
+*** Narrow by type
+
+#+BEGIN_SRC python
+>>> from kingston.primitives import narrowable
+>>> narrowable((1,2,3,'foo', 'bar'))[int]
+(1, 2, 3)
+>>>
+#+END_SRC
+
+*** Narrow by callable
+
+#+BEGIN_SRC python
+>>> from kingston.primitives import narrowable
+>>> narrowable((1, 2, 3))[lambda x: x > 1]
+(2, 3)
+>>>
+>>> narrowable((1,2,3,'foo', 'bar'))[int]
+(1, 2, 3)
+>>> narrowable((1,2,3,'foo', 'bar'))[lambda x: x > 1]
+(2, 3)
+>>> # Note, swallows ValueError raised by 'foo' > 1 etc
+>>>
+#+END_SRC
+
+*** Supress empty iterable objects
+
+#+BEGIN_SRC python
+>>> from kingston.primitives import narrowable
+>>> narrowable([[1], [2], [], []])[lambda x: x[0]]
+[[1], [2]]
+>>>
+#+END_SRC
+
+*** Narrow using exact match
+
+#+BEGIN_SRC python
+>>> from kingston.primitives import narrowable
+>>> narrowable((1, 2, 3, 'foo'))['foo']
+('foo',)
+>>>
+#+END_SRC
+
+*** Narrow using a regexp
+
+#+BEGIN_SRC python
+>>> from kingston.primitives import narrowable
+>>> import re
+>>> narrowable(('foo', 'fom', 'jox', 8, 'fim'))[re.compile('fo.*').match]
+('foo', 'fom')
+>>>
+#+END_SRC
+
+*** Combine
+
+#+BEGIN_SRC python
+>>> from kingston.primitives import narrowable
+>>> narrowable((1,2,3,'foo', 'bar'))[str]['foo']
+('foo',)
+>>>
+#+END_SRC
+
+** Go deeper
+
+#+BEGIN_SRC python
+>>> from kingston.primitives import narrowable
+>>> narrowable((1, 2, 3, (41, 42, 43)))[tuple][0][lambda x: x > 41]
+(42, 43)
+>>>
+#+END_SRC
+
+*** No matches found
+
+If no element matches, an empty version of the collection parameter
+will be returned:
+
+#+BEGIN_SRC python
+>>> from kingston.primitives import narrowable
+>>> narrowable((1,2,3))[lambda x: x > 3]
+()
+>>>
+#+END_SRC
+
 
 *** Programmatic class creation
 
@@ -47,11 +157,11 @@ Programmatic creation of arbitrary named classes in module definition,
 add methods using a decorator notation:
 
 #+BEGIN_SRC python
->>> from micropy import lang
+>>> from kingston import lang
 >>> mystuff = (('Foo', 1), ('Bar', 2))
 >>> for name, num in mystuff: locals()[name] = lang.mkclass(name, **{'num': num})
 >>> Foo
-<class 'micropy.lang.Foo'>
+<class 'kingston.lang.Foo'>
 >>> Foo.num
 1
 >>> \
@@ -80,9 +190,9 @@ add methods using a decorator notation:
 >>>
 #+END_SRC
 
-*** micropy module with developer convenience tools
+*** kingston module with developer convenience tools
 
-The =micropy.microscope= module contains utilities that aid
+The =kingston.microscope= module contains utilities that aid
 development. It has to ways to inspect live objects:
 
 
@@ -94,7 +204,7 @@ to ‘AbneuYAML’ should be easy to get a visual overview of for humans.
 To dump any object:
 
 #+BEGIN_SRC python
->>> from micropy import microscope
+>>> from kingston import microscope
 >>> class Cls: pass
 ...
 >>> c = Cls()
@@ -117,7 +227,7 @@ To dump any object:
 ** A simple way of creating small DSL's using Python operator overloading.
 
 #+BEGIN_SRC python
->>> from micropy import lang
+>>> from kingston import lang
 >>> \
 ... class PipingExample(lang.Piping):
 ...     def __add__(self, value) -> lang.Piping:
@@ -135,7 +245,7 @@ Mostly, you'll want to use the pipe operator to define simple
 composition:
 
 #+BEGIN_SRC python
->>> from micropy import lang
+>>> from kingston import lang
 >>> incr = lambda x: x + 1
 >>> showr = "It is {}!".format
 >>> (lang.ComposePiping(5) >> incr >> incr >> showr)()
@@ -143,108 +253,3 @@ composition:
 >>>
 #+END_SRC
 
-** 'Call by type' convenience objects
-
-#+BEGIN_SRC python
->>> from micropy import lang
->>> foo = lang.Match({int: lambda x: x*100, str: lambda x: f'Hello {x}'})
->>> foo(10)
-1000
->>> foo('bar')
-'Hello bar'
->>>
-#+END_SRC
-
-** Narrowable collections
-
-Uses indexes to narrow collections to fewer values. You can narrow by
-type, a predicate function or value equality. The return value is
-always a new =Narrowable= derived type from the initial
-value. Therefore, you can chain several narrowing operations in the
-same expression.
-
-Errors raised by the narrowing predicates are considered misses.
-
-Some examples:
-
-*** Narrow by type
-
-#+BEGIN_SRC python
->>> from micropy.primitives import narrowable
->>> narrowable((1,2,3,'foo', 'bar'))[int]
-(1, 2, 3)
->>>
-#+END_SRC
-
-*** Narrow by callable
-
-#+BEGIN_SRC python
->>> from micropy.primitives import narrowable
->>> narrowable((1, 2, 3))[lambda x: x > 1]
-(2, 3)
->>>
->>> narrowable((1,2,3,'foo', 'bar'))[int]
-(1, 2, 3)
->>> narrowable((1,2,3,'foo', 'bar'))[lambda x: x > 1]
-(2, 3)
->>> # Note, swallows ValueError raised by 'foo' > 1 etc
->>>
-#+END_SRC
-
-*** Supress empty iterable objects
-
-#+BEGIN_SRC python
->>> from micropy.primitives import narrowable
->>> narrowable([[1], [2], [], []])[lambda x: x[0]]
-[[1], [2]]
->>>
-#+END_SRC
-
-*** Narrow using exact match
-
-#+BEGIN_SRC python
->>> from micropy.primitives import narrowable
->>> narrowable((1, 2, 3, 'foo'))['foo']
-('foo',)
->>>
-#+END_SRC
-
-*** Narrow using a regexp
-
-#+BEGIN_SRC python
->>> from micropy.primitives import narrowable
->>> import re
->>> narrowable(('foo', 'fom', 'jox', 8, 'fim'))[re.compile('fo.*').match]
-('foo', 'fom')
->>>
-#+END_SRC
-
-*** Combine
-
-#+BEGIN_SRC python
->>> from micropy.primitives import narrowable
->>> narrowable((1,2,3,'foo', 'bar'))[str]['foo']
-('foo',)
->>>
-#+END_SRC
-
-** Go deeper
-
-#+BEGIN_SRC python
->>> from micropy.primitives import narrowable
->>> narrowable((1, 2, 3, (41, 42, 43)))[tuple][0][lambda x: x > 41]
-(42, 43)
->>>
-#+END_SRC
-
-*** No matches found
-
-If no element matches, an empty version of the collection parameter
-will be returned:
-
-#+BEGIN_SRC python
->>> from micropy.primitives import narrowable
->>> narrowable((1,2,3))[lambda x: x > 3]
-()
->>>
-#+END_SRC

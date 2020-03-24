@@ -1,4 +1,4 @@
-from micropy import bintools
+from kingston import bintools
 
 
 def test_binstr():

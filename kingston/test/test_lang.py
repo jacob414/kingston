@@ -2,8 +2,8 @@
 
 import pytest
 
-from micropy import lang
-from micropy.testing import fixture
+from kingston import lang
+from kingston.testing import fixture
 
 from typing import Any
 import operator as ops

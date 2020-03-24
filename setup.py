@@ -7,7 +7,7 @@ except ImportError:
     from distutils.core import setup
 
 import os
-import micropy
+import kingston
 import tempfile
 import subprocess
 
@@ -32,7 +32,7 @@ try:
     # interpreter instances
     import mypy
 
-    from micropy.testing import ReviewProject
+    from kingston.testing import ReviewProject
     cmdclass = {'review': ReviewProject}
 except ImportError:
     cmdclass = {}
@@ -41,7 +41,7 @@ except ImportError:
 long_desc = ''
 try:
     tmpdir = tempfile.mkdtemp()
-    outpath = os.path.join(tmpdir, 'micropy-README.rst')
+    outpath = os.path.join(tmpdir, 'kingston-README.rst')
     subprocess.check_call(['pandoc', 'README.org', '-o', outpath])
     with open(outpath) as fp:
         long_desc = fp.read()
@@ -49,19 +49,19 @@ except Exception as exc:
     long_desc = ''  # nothing to do.
 
 setup(
-    name='micropy',
+    name='kingston',
     cmdclass=cmdclass,
-    version=micropy.__version__,
+    version=kingston.__version__,
     description="Some Python nicieties",
     long_description=long_desc,
-    packages=('micropy', ),
+    packages=('kingston', ),
     author='Jacob Oscarson',
     author_email='jacob@414soft.com',
     install_requires=install,
     extras_require={
         'test': install + develop,
     },
-    url='https://www.414soft.com/micropy',
+    url='https://www.414soft.com/kingston',
     license='MIT',
     classifiers=[
         'Programming Language :: Python',

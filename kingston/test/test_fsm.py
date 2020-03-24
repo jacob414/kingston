@@ -2,7 +2,7 @@
 
 import pytest
 
-from micropy import fsm
+from kingston import fsm
 
 
 class Machine(fsm.FSM):

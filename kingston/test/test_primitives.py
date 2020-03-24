@@ -1,7 +1,7 @@
 # yapf
 import pytest
 
-from micropy import primitives as P
+from kingston import primitives as P
 
 
 def incr(x: int) -> int:
