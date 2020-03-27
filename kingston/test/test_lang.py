@@ -3,6 +3,7 @@
 import pytest
 
 from kingston import lang
+from kingston import match
 from kingston.testing import fixture
 
 from typing import Any
@@ -281,13 +282,13 @@ def test_logic_piping(lpipe, param, want) -> None:
     assert lpipe(param) == want
 
 
-def dispr() -> lang.Match:
+def dispr() -> match.Match:
     "Does dispr"
 
-    disp = lang.Match({int: lambda x: x + 1})
+    disp = match.Match({int: lambda x: x + 1})
 
     @disp.case
-    def add_two_int(self, a: int, b: int) -> int:
+    def add_two_int(a: int, b: int) -> int:
         "Fixture function: called with 2 integers, should add the integers."
         return a + b
 

@@ -1,7 +1,9 @@
 # yapf
 
+
 class BasePiping(object):  # type: ignore
     ...
+
 
 class BasePiping(object):
     def __add__(self, other) -> BasePiping:

@@ -6,7 +6,8 @@ import numbers
 import copy
 from functools import singledispatch
 from pysistence import Expando
-from typing import Any, Mapping, List, Tuple, Iterable, Generator, Callable, Union
+from typing import (Any, Mapping, List, Tuple, Iterable, Generator, Callable,
+                    Union)
 import inspect
 from . import pipelib
 import itertools
@@ -248,8 +249,8 @@ class Piping(pipelib.BasePiping):
         "Does show"
         print(self.__class__.__name__)
         textual = (
-            f'kind = {self.kind}, state = {self.state}, seed = {self.seed}, cursor = {self.cursor}, last result = {self.last_result}'
-        )
+            f'kind = {self.kind}, state = {self.state}, seed = {self.seed},'
+            f'cursor = {self.cursor}, last result = {self.last_result}')
         print(textual)
 
     @property
@@ -449,36 +450,3 @@ class LogicPiping(Piping):
 
     def __or__(self, stepf: Callable[[Any, None, None], Any]) -> Piping:
         return self.logically(stepf, False)
-
-
-class Match(dict):
-    """Crue type Match and extractor:
-
-    Define a mapping of types. Call for an instance, the parameter
-    type should be mapped by `type(obj)` returning a callable that
-    will further process the instance.
-
-    """
-    def case(*params: Any) -> Callable:
-        """Decorator to add a function. The types of the parameters. The types
-        that will be matched is taken from the signature of the
-        decorated function.
-
-        """
-        self, fn = params
-        disp = tuple(arg.annotation
-                     for arg in inspect.signature(fn).parameters.values())[1:]
-
-        self[disp] = fn
-
-        return fn
-
-    def __call__(self, *params: Any,
-                 **opts: Any) -> Union[Iterable[Any], Iterable]:
-        "Return the value keyed by the type of parameter `obj`"
-
-        T = tuple(type(p) for p in params)
-        if len(T) == 1:
-            return self[T[0]](*params)
-        else:
-            return self[T](self, *params)

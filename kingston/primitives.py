@@ -1,10 +1,6 @@
 # yapf
 
-import inspect
-import ast
-import sys
-
-from typing import Any, List, Callable, Union, Collection
+from typing import Any, Callable, Union, Collection
 
 from collections.abc import Iterable
 

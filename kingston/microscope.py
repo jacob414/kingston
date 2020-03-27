@@ -52,7 +52,6 @@ def genabneuyaml(cursor: Any, ident=0, name=None, maxrecur=100,
     desc = guessdesc(cursor)
     if name:
         desc = f"{name}={desc}"
-    line = before + ' ' + desc
     yield before, desc
     if ident > maxrecur:
         print(f"abneuyaml: high recursion ({maxrecur}) reached, "

@@ -9,6 +9,7 @@ from functools import singledispatch
 
 import funcy
 
+
 @dataclass
 class Attr:
     infer_types = {}

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+ #!/usr/bin/env python
 # yapf
 
 try:
@@ -31,6 +31,7 @@ try:
     # make setup.py review available only to fully dev-capable
     # interpreter instances
     import mypy
+    assert mypy
 
     from kingston.testing import ReviewProject
     cmdclass = {'review': ReviewProject}
@@ -45,7 +46,7 @@ try:
     subprocess.check_call(['pandoc', 'README.org', '-o', outpath])
     with open(outpath) as fp:
         long_desc = fp.read()
-except Exception as exc:
+except Exception:
     long_desc = ''  # nothing to do.
 
 setup(

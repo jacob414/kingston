@@ -2,14 +2,11 @@
 
 import sys
 import io
-from typing import Any, Tuple, List, Mapping, Callable, Optional
+from typing import Any, Tuple, List, Callable, Optional
 import pdb
 import traceback
 
 import distutils.cmd
-
-import functools
-from contextlib import contextmanager
 
 import funcy  # type: ignore
 import pytest  # type: ignore
@@ -19,7 +16,7 @@ from altered import state  # type: ignore
 import pycodestyle  # type: ignore
 import mypy.api  # type: ignore
 
-import pyflakes.api  # type: ignore
+from flake8.api import legacy as flake8  # type: ignore
 
 
 class fixture(object):
@@ -40,12 +37,12 @@ class ReviewProject(distutils.cmd.Command):  # pragma: nocov
 
     @staticmethod
     def lint() -> Tuple[int, str, str]:
-        print('     pyflakes...')
-        warn, err = io.StringIO(), io.StringIO()
-        code = pyflakes.api.checkRecursive(
-            ['kingston'],  # package directory
-            pyflakes.reporter.Reporter(warningStream=warn, errorStream=err))
-        return (code, warn.getvalue(), err.getvalue())
+        print('     flake8...')
+        out, err = io.StringIO(), io.StringIO()
+        guide = flake8.get_style_guide()
+        with state(sys, stdout=out, stderr=err):
+            report = guide.check_files('.')
+        return (report.total_errors, out.getvalue(), err.getvalue())
 
     @staticmethod
     def style() -> Tuple[int, str, str]:
@@ -79,7 +76,7 @@ class ReviewProject(distutils.cmd.Command):  # pragma: nocov
     def run(self: 'ReviewProject') -> None:
         "Runs the setup task `'review'`."
         reports = {
-            'pyflakes': ReviewProject.lint(),
+            'flake8': ReviewProject.lint(),
             'pycodestyle': ReviewProject.style(),
             'mypy': ReviewProject.types(),
         }

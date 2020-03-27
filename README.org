@@ -44,13 +44,83 @@ foop=2:int
 
 ** Pattern matching using extended =dict='s
 
+=match.Match= objects are callable objects using a =dict= semantic
+that also matches calls based on the type of the calling parameters:
+
 #+BEGIN_SRC python
->>> from kingston import lang
->>> foo = lang.Match({int: lambda x: x*100, str: lambda x: f'Hello {x}'})
+>>> from kingston import match
+>>> foo = match.Match({int: lambda x: x*100, str: lambda x: f'Hello {x}'})
 >>> foo(10)
 1000
 >>> foo('bar')
 'Hello bar'
+>>>
+#+END_SRC
+
+#+BEGIN_SRC python
+>>> from kingston import match
+>>> foo = match.Match({int: lambda x: x*100, str: lambda x: f'Hello {x}', (int, int): lambda a,b: a+b})
+>>> foo(10)
+1000
+>>> foo('bar')
+'Hello bar'
+>>>
+>>> foo(1, 2)
+3
+>>>
+#+END_SRC
+
+You can use =typing.Any= as a wildcard:
+
+#+BEGIN_SRC python
+>>> from typing import Any
+>>> from kingston import match
+>>> foo = match.Match({
+...     int: lambda x: x * 100,
+...     str: (lambda x: f"Hello {x}"),
+...     (int, Any): (lambda num, x: num * x)
+... })
+>>> foo(10)
+1000
+>>> foo('bar')
+'Hello bar'
+>>> foo(3, 'X')
+'XXX'
+>>> foo(10, 10)
+100
+>>>
+#+END_SRC
+
+
+*** Match by value(s)
+
+=match.VMatch= will use the /values/ of the parameters to do the same
+as as =match.Match=:
+
+#+BEGIN_SRC python
+>>> from kingston import match
+>>> foo = match.VMatch({'x': (lambda: 'An x!'), ('x', 'y'): (lambda x,y: 3*(x+y))})
+>>> foo('x')
+'An x!'
+>>> foo('x', 'y')
+'xyxyxy'
+>>>
+#+END_SRC
+
+Same as with the type matcher above, =typing.Any= works as a wildcard
+with the value matcher as well:
+
+#+BEGIN_SRC python
+>>> from kingston import match
+>>> from typing import Any
+>>> foo = match.VMatch({
+...     'x': lambda x: 'An X!',
+...     ('y', Any): lambda x, y: 3 * (x + y)
+... })
+>>> foo('x')
+'An X!'
+>>> foo('y', 'x')
+'yxyxyx'
 >>>
 #+END_SRC
 

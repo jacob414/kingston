@@ -1,8 +1,9 @@
 # yapf
 
-from functools import wraps
+from functools import wraps, partial
 
 from inspect import ismethod
+from typing import Callable
 
 
 class FSM(object):
@@ -10,12 +11,15 @@ class FSM(object):
         self.state = initial
 
     def methods(self):
-        attr = lambda n: getattr(self, n)
+        attr = partial(getattr, self)
         return (attr(n) for n in dir(self) if ismethod(attr(n)))
 
     def transition(self, state, *args, **kwargs):
         desc = f"{self.state}->{state}"
-        istransit = lambda m: getattr(m, 'transits', '') == desc
+
+        def istransit(m: Callable) -> bool:
+            return getattr(m, 'transits', '') == desc
+
         return (r for r in (transit for transit in (m(state, *args, **kwargs)
                                                     for m in self.methods()
                                                     if istransit(m))))
