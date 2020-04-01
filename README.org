@@ -59,7 +59,11 @@ that also matches calls based on the type of the calling parameters:
 
 #+BEGIN_SRC python
 >>> from kingston import match
->>> foo = match.Match({int: lambda x: x*100, str: lambda x: f'Hello {x}', (int, int): lambda a,b: a+b})
+>>> foo = match.Match({
+...     int: lambda x: x * 100,
+...     str: lambda x: f'Hello {x}',
+...     (int, int): lambda a, b: a + b
+... })
 >>> foo(10)
 1000
 >>> foo('bar')
