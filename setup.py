@@ -25,6 +25,7 @@ develop = (
     "pycodestyle>=2.5.0",
     "mypy>=0.730",
     "pyflakes>=2.1.1",
+    "flake8",
 )  # yapf: disable
 
 try:
