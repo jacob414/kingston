@@ -1,0 +1,24 @@
+# In case someone wants to use poetry (I'm usualy not in the habit
+# myself, but maybe)
+
+[tool.poetry]
+name           = "kingston"
+version        = "0.6.4"
+description    = "Funcy Kingston"
+authors        = ["Jacob Oscarson <jacob@414soft.com>"]
+
+[tool.poetry.dependencies]
+python         = "^3.7"
+funcy          = "^1.10.2"
+jsonpickle     = "^1.2"
+patterns       = "^0.3"
+pysistence     = "^0.4.1"
+
+
+[tool.poetry.dev-dependencies]
+altered_states = "^1.0.9"
+hypothesis     = "^4.24"
+mypy           = "^0.730"
+pycodestyle    = "^2.5"
+pyflakes       = "^2.1.1"
+pytest         = "^5.4"
