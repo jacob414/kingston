@@ -6,6 +6,8 @@ with funcy. Funcy Kingston (Reference, see [[https://youtu.be/U79o7qwul48][here]
 
 Kingston is auto-formatted using [[https://github.com/google/yapf][yapf]].
 
+[[https://repl.it/badge/github/jacob414/kingston][Run on Repl.it]]
+
 ** Nice things
 
 *** dig()
