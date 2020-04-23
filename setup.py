@@ -1,15 +1,15 @@
  #!/usr/bin/env python
 # yapf
 
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
-
 import os
 import kingston
 import tempfile
 import subprocess
+
+try:
+    from setuptools import setup
+except ImportError:
+    from distutils.core import setup
 
 install = (
     "funcy>=1.10.2",
