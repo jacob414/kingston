@@ -60,6 +60,7 @@ setup(
     author='Jacob Oscarson',
     author_email='jacob@414soft.com',
     install_requires=install,
+    tests_require=install+develop,
     extras_require={
         'test': install + develop,
     },
