@@ -13,12 +13,17 @@ funcy          = "^1.10.2"
 jsonpickle     = "^1.2"
 patterns       = "^0.3"
 pysistence     = "^0.4.1"
+altered-states = "^1.0"
+flake8 = "^3.7"
+mypy = "^0.770.0"
+pycodestyle = "^2.5"
+pytest = "^5.4"
 
 
 [tool.poetry.dev-dependencies]
 altered_states = "^1.0.9"
 hypothesis     = "^4.24"
-mypy           = "^0.730"
+mypy           = "^0.770"
 pycodestyle    = "^2.5"
 pyflakes       = "^2.1.1"
 pytest         = "^5.4"
