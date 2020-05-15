@@ -1,0 +1,132 @@
+------- STOP 1, ~src/ext/python/mypy/mypy/stubgen.py(1364)
+
+> /Users/jacob/src/ext/python/mypy/mypy/stubgen.py(1364)generate_asts_for_modules()
+-> res = build(list(py_modules), mypy_options)
+(Pdb) a
+py_modules = [<BuildSource path='./kingston/__init__.pyi' module='kingston' has_text=False base_dir=None>, <BuildSource path='./kingston/test/__init__.py' module='kingston.test' has_text=False base_dir=None>, <BuildSource path='./kingston/test/test_bintools.py' module='kingston.test.test_bintools' has_text=False base_dir=None>, <BuildSource path='./kingston/test/test_dig.py' module='kingston.test.test_dig' has_text=False base_dir=None>, <BuildSource path='./kingston/test/test_fsm.py' module='kingston.test.test_fsm' has_text=False base_dir=None>, <BuildSource path='./kingston/test/test_lang.py' module='kingston.test.test_lang' has_text=False base_dir=None>, <BuildSource path='./kingston/test/test_match_wb.py' module='kingston.test.test_match_wb' has_text=False base_dir=None>, <BuildSource path='./kingston/test/test_primitives.py' module='kingston.test.test_primitives' has_text=False base_dir=None>, <BuildSource path='./kingston/test/test_view.py' module='kingston.test.test_view' has_text=False base_dir=None>, <BuildSource path='./kingston/bintools.pyi' module='kingston.bintools' has_text=False base_dir=None>, <BuildSource path='./kingston/dig.pyi' module='kingston.dig' has_text=False base_dir=None>, <BuildSource path='./kingston/fsm.pyi' module='kingston.fsm' has_text=False base_dir=None>, <BuildSource path='./kingston/lang.pyi' module='kingston.lang' has_text=False base_dir=None>, <BuildSource path='./kingston/match.pyi' module='kingston.match' has_text=False base_dir=None>, <BuildSource path='./kingston/microscope.pyi' module='kingston.microscope' has_text=False base_dir=None>, <BuildSource path='./kingston/pipelib.pyi' module='kingston.pipelib' has_text=False base_dir=None>, <BuildSource path='./kingston/primitives.pyi' module='kingston.primitives' has_text=False base_dir=None>, <BuildSource path='./kingston/testing.pyi' module='kingston.testing' has_text=False base_dir=None>, <BuildSource path='./kingston/view.pyi' module='kingston.view' has_text=False base_dir=None>, <BuildSource path='./kingston/kind.py' module='kingston.kind' has_text=False base_dir=None>, <BuildSource path='./conftest.py' module='conftest' has_text=False base_dir=None>, <BuildSource path='./setup.py' module='setup' has_text=False base_dir=None>, <BuildSource path='./sg_poc.py' module='sg_poc' has_text=False base_dir=None>, <BuildSource path='kingston/kind.py' module='kingston.kind' has_text=False base_dir=None>]
+parse_only = False
+mypy_options = Options({'allow_redefinition': False,
+ 'allow_untyped_globals': False,
+ 'always_false': [],
+ 'always_true': [],
+ 'bazel': False,
+ 'build_type': 0,
+ 'cache_dir': '.mypy_cache',
+ 'cache_fine_grained': False,
+ 'cache_map': {},
+ 'check_untyped_defs': False,
+ 'color_output': True,
+ 'config_file': None,
+ 'custom_typeshed_dir': None,
+ 'custom_typing_module': None,
+ 'debug_cache': False,
+ 'disallow_any_decorated': False,
+ 'disallow_any_explicit': False,
+ 'disallow_any_expr': False,
+ 'disallow_any_generics': False,
+ 'disallow_any_unimported': False,
+ 'disallow_incomplete_defs': False,
+ 'disallow_subclassing_any': False,
+ 'disallow_untyped_calls': False,
+ 'disallow_untyped_decorators': False,
+ 'disallow_untyped_defs': False,
+ 'dump_build_stats': False,
+ 'dump_deps': False,
+ 'dump_graph': False,
+ 'dump_inference_stats': False,
+ 'dump_type_stats': False,
+ 'error_summary': True,
+ 'export_types': False,
+ 'fast_exit': False,
+ 'files': None,
+ 'fine_grained_incremental': False,
+ 'follow_imports': 'skip',
+ 'follow_imports_for_stubs': False,
+ 'ignore_errors': True,
+ 'ignore_missing_imports': False,
+ 'implicit_reexport': True,
+ 'incremental': False,
+ 'junit_xml': None,
+ 'local_partial_types': False,
+ 'logical_deps': False,
+ 'mypy_path': [],
+ 'mypyc': False,
+ 'namespace_packages': False,
+ 'no_implicit_optional': False,
+ 'no_silence_site_packages': False,
+ 'no_site_packages': False,
+ 'package_root': [],
+ 'pdb': False,
+ 'per_module_options': OrderedDict(),
+ 'platform': 'darwin',
+ 'plugins': [],
+ 'preserve_asts': False,
+ 'pretty': False,
+ 'python_executable': '/Users/jacob/opt/plus/py/bin/python',
+ 'python_version': (3, 6),
+ 'quickstart_file': None,
+ 'raise_exceptions': False,
+ 'report_dirs': {},
+ 'scripts_are_modules': False,
+ 'semantic_analysis_only': True,
+ 'shadow_file': None,
+ 'show_absolute_path': False,
+ 'show_column_numbers': False,
+ 'show_error_codes': False,
+ 'show_error_context': False,
+ 'show_none_errors': True,
+ 'show_traceback': True,
+ 'skip_cache_mtime_checks': False,
+ 'skip_version_check': False,
+ 'sqlite_cache': False,
+ 'strict_equality': False,
+ 'strict_optional': True,
+ 'strict_optional_whitelist': None,
+ 'transform_source': <function remove_misplaced_type_comments at 0x10e6a88c8>,
+ 'unused_configs': set(),
+ 'use_builtins_fixtures': False,
+ 'use_fine_grained_cache': False,
+ 'verbosity': 0,
+ 'warn_incomplete_stub': False,
+ 'warn_no_return': True,
+ 'warn_redundant_casts': False,
+ 'warn_return_any': False,
+ 'warn_unreachable': False,
+ 'warn_unused_configs': False,
+ 'warn_unused_ignores': False})
+verbose = False
+(Pdb) build(list(py_modules), mypy_options)
+*** mypy.errors.CompileError
+(Pdb) s
+--Call--
+> /Users/jacob/src/ext/python/mypy/mypy/build.py(136)build()
+-> def build(sources: List[BuildSource],
+(Pdb) n
+> /Users/jacob/src/ext/python/mypy/mypy/build.py(169)build()
+-> messages = []
+(Pdb) sources
+[<BuildSource path='./kingston/__init__.pyi' module='kingston' has_text=False base_dir=None>, <BuildSource path='./kingston/test/__init__.py' module='kingston.test' has_text=False base_dir=None>, <BuildSource path='./kingston/test/test_bintools.py' module='kingston.test.test_bintools' has_text=False base_dir=None>, <BuildSource path='./kingston/test/test_dig.py' module='kingston.test.test_dig' has_text=False base_dir=None>, <BuildSource path='./kingston/test/test_fsm.py' module='kingston.test.test_fsm' has_text=False base_dir=None>, <BuildSource path='./kingston/test/test_lang.py' module='kingston.test.test_lang' has_text=False base_dir=None>, <BuildSource path='./kingston/test/test_match_wb.py' module='kingston.test.test_match_wb' has_text=False base_dir=None>, <BuildSource path='./kingston/test/test_primitives.py' module='kingston.test.test_primitives' has_text=False base_dir=None>, <BuildSource path='./kingston/test/test_view.py' module='kingston.test.test_view' has_text=False base_dir=None>, <BuildSource path='./kingston/bintools.pyi' module='kingston.bintools' has_text=False base_dir=None>, <BuildSource path='./kingston/dig.pyi' module='kingston.dig' has_text=False base_dir=None>, <BuildSource path='./kingston/fsm.pyi' module='kingston.fsm' has_text=False base_dir=None>, <BuildSource path='./kingston/lang.pyi' module='kingston.lang' has_text=False base_dir=None>, <BuildSource path='./kingston/match.pyi' module='kingston.match' has_text=False base_dir=None>, <BuildSource path='./kingston/microscope.pyi' module='kingston.microscope' has_text=False base_dir=None>, <BuildSource path='./kingston/pipelib.pyi' module='kingston.pipelib' has_text=False base_dir=None>, <BuildSource path='./kingston/primitives.pyi' module='kingston.primitives' has_text=False base_dir=None>, <BuildSource path='./kingston/testing.pyi' module='kingston.testing' has_text=False base_dir=None>, <BuildSource path='./kingston/view.pyi' module='kingston.view' has_text=False base_dir=None>, <BuildSource path='./kingston/kind.py' module='kingston.kind' has_text=False base_dir=None>, <BuildSource path='./conftest.py' module='conftest' has_text=False base_dir=None>, <BuildSource path='./setup.py' module='setup' has_text=False base_dir=None>, <BuildSource path='./sg_poc.py' module='sg_poc' has_text=False base_dir=None>, <BuildSource path='kingston/kind.py' module='kingston.kind' has_text=False base_dir=None>]
+
+---- STOP, sedan brytpunkt på nytt ställe...
+kingston $ python sg_poc.py
+> /Users/jacob/src/ext/python/mypy/mypy/build.py(191)build()
+-> serious = not e.use_stdout
+(Pdb) l
+186  	        # CompileErrors raised from an errors object carry all of the
+187  	        # messages that have not been reported out by error streaming.
+188  	        # Patch it up to contain either none or all none of the messages,
+189  	        # depending on whether we are flushing errors.
+190  	        import pdb; pdb.set_trace()
+191  ->	        serious = not e.use_stdout
+192  	        flush_errors(e.messages, serious)
+193  	        e.messages = messages
+194  	        raise
+195
+196
+(Pdb) e
+CompileError('')
+(Pdb) e.messages
+[]
+(Pdb)
+
+---- BAKÅT, in i _build....
