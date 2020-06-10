@@ -16,14 +16,10 @@ from functools import wraps, update_wrapper
 
 import operator as ops
 
-PRIMTYPES = {int, bool, float, str, set, list, tuple, dict}
-LISTLIKE = {set, list, tuple}
+from functools import wraps, singledispatch
 
-textual = funcy.isa(str)
-numeric = funcy.isa(numbers.Number)
-isint = funcy.isa(int)
-isdict = funcy.isa(dict)
-isgen = funcy.isa(types.GeneratorType)
+from .decl import (PRIMTYPES, LISTLIKE, Primitive, Listlike, textual, numeric,
+                   isint, isdict, isgen, box, unbox)
 
 
 def unfold_gen(x: Generator[Any, None, None],
@@ -59,7 +55,7 @@ class XE(Expando):
 def pubvars(obj: Any) -> Iterable:
     "Returns all public variables except methods"
     if isdict(obj):
-        return obj.keys()
+        return tuple(obj)
     if funcy.is_seqcoll(obj) or isinstance(obj, set):
         return copy.copy(obj)
     else:
@@ -203,9 +199,19 @@ def mkclass(name: str, bases: Tuple = (), **clsattrs: Any) -> Any:
     return Gen
 
 
+def params(fn: Callable) -> Mapping[str, Any]:
+    return inspect.signature(fn).parameters
+
+
 def arity(fn: Callable) -> int:
     "Returns the number of arguments required by `fn`."
-    return len(inspect.signature(fn).parameters)
+    return len(params(fn))
+
+
+def callinfo(fn: Callable, env: Mapping[str, Any]) -> dict:
+    return {
+        'args': [env[name] for name in params(fn)],
+    }
 
 
 always_tup = funcy.iffy(funcy.complement(funcy.is_seqcont), lambda x: (x, ))

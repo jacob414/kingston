@@ -18,6 +18,31 @@ import mypy.api  # type: ignore
 
 from flake8.api import legacy as flake8  # type: ignore
 
+from hypothesis import strategies as st
+
+import contextlib
+
+between = lambda from_, to_: st.integers(min_value=from_, max_value=to_)
+ints = st.integers()
+diff_ints = lambda n: st.lists(
+    between(0, n), min_size=n, max_size=n, unique=True)
+int_or_none = st.one_of(st.none(), st.integers())
+idx = lambda max_: st.integers(min_value=0, max_value=max_)
+
+# Simplified mirroring paramtrically lax ident, for testing convenience
+same = lambda *args, **kwargs: args[0] if len(args) == 1 else args
+
+
+@contextlib.contextmanager
+def bugtrap(*args, **kwargs):
+    try:
+        yield (args, kwargs)  # 1. Do
+    except:  # 2. Catch
+        type_, value, tb = sys.exc_info()
+        import ipdb
+        ipdb.set_trace()  # 3. ?
+        pass  # 4. Profit!
+
 
 class fixture(object):
     @staticmethod
