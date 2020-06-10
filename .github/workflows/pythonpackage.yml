@@ -26,4 +26,4 @@ jobs:
         python -m pip install --upgrade pip
         pip install pytest altered_states hypothesis
         pip install -e .[test]
-        pytest -m "wbox or bbox"
+        pytest -m "slow or wbox or bbox"

@@ -16,6 +16,8 @@ from kingston import lazy
 from hypothesis import given
 from hypothesis import strategies as st
 
+pytestmark = pytest.mark.wbox
+
 @pytest.fixture
 def genlist():
     return lazy.GListlike(e for e in (1,2,3))
