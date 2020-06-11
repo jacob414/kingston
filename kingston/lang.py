@@ -1,25 +1,27 @@
 # yapf
 
 import funcy
+from funcy import flow
+import funcy as fy
+
 import types
 import numbers
 import copy
 from functools import singledispatch
 from pysistence import Expando
 from typing import (Any, Mapping, List, Tuple, Iterable, Generator, Callable,
-                    Union)
+                    Union, TYPE_CHECKING)
 import inspect
 from . import pipelib
+from . import decl
+
 import itertools
 
 from functools import wraps, update_wrapper
 
 import operator as ops
 
-from functools import wraps, singledispatch
-
-from .decl import (PRIMTYPES, LISTLIKE, Primitive, Listlike, textual, numeric,
-                   isint, isdict, isgen, box, unbox)
+from .decl import (PRIMTYPES, textual, numeric, isdict, isgen)
 
 
 def unfold_gen(x: Generator[Any, None, None],
@@ -28,7 +30,10 @@ def unfold_gen(x: Generator[Any, None, None],
     the hood)
 
     """
-    return cast(funcy.flatten(x, isgen))
+    res = tuple(funcy.flatten(x, isgen))
+    if TYPE_CHECKING:
+        res = cast(Iterable, res)  # pragma: nocov
+    return res
 
 
 def typename(x: Any) -> str:
@@ -47,9 +52,6 @@ class XE(Expando):
     def iteritems(self: 'XE') -> Mapping[str, Any]:
         "Does iteritems"
         return self.to_dict().items()
-
-    def get(self, name, default=None):
-        return self.to_dict().get(name, default)
 
 
 def pubvars(obj: Any) -> Iterable:
@@ -81,26 +83,16 @@ def isprim_type(type_):
     return True if type_ in PRIMTYPES else False
 
 
-def tolerant_or_original(Exc, fn):
-    """Returns a function that will allow the Exception(s) in `Exc` to
-    occur."""
-    def invoke(obj) -> Any:
-        "Does invoke"
-        try:
-            return fn(obj)
-        except Exc:
-            return obj
-
-    return invoke
+def num_or_else(cand: Any) -> numbers.Number:
+    asint = flow.silent(int)(cand)
+    if decl.numeric(asint): return asint
+    asfloat = flow.silent(float)(cand)
+    if decl.numeric(asfloat): return asfloat
+    return cand
 
 
-def coerce_or_same(T: Any) -> str:
-    "Special case of `tolerant_or_original()` for type coercion."
-    "Does coerce_or_same"
-    return tolerant_or_original((TypeError, ValueError, AttributeError), T)
-
-
-maybe_int = coerce_or_same(int)
+def detect_numbers(seq: Iterable) -> Iterable:
+    return [num_or_else(el) for el in seq]
 
 
 def methdispatch(func):
@@ -216,6 +208,8 @@ def callinfo(fn: Callable, env: Mapping[str, Any]) -> dict:
 
 always_tup = funcy.iffy(funcy.complement(funcy.is_seqcont), lambda x: (x, ))
 
+PipeFormatFn = Callable[[Any, None, None], Any]
+
 
 class Piping(pipelib.BasePiping):
     """Piping objects is for (ab)using Python operator overloading to
@@ -236,7 +230,7 @@ class Piping(pipelib.BasePiping):
     def __init__(self,
                  seed: Union[tuple, Any] = (),
                  kind: Callable = map,
-                 format: Callable[[Any, None, None], Any] = funcy.identity):
+                 format: PipeFormatFn = funcy.identity):  # type: ignore
         "Initialize a new Piping object."
         self.reset()
         self.format = format
@@ -263,13 +257,11 @@ class Piping(pipelib.BasePiping):
     def now(self):
         return self.last_result
 
-    def fncompose(self, stepf: Callable[[Any, None, None], Any],
-                  x: Any = None) -> 'Piping':
+    def fncompose(self, stepf: Callable, x: Any = None) -> 'Piping':
         self.queue(stepf, x)
         return self
 
-    def queue(self, stepf: Callable[[Any, None, None], Any],
-              *x: Any) -> 'Piping':
+    def queue(self, stepf, *x: Any) -> 'Piping':
         "Does queue"
         self.ops = (*self.ops, ((stepf, x)))
         return self
@@ -359,7 +351,7 @@ class ComposePiping(Piping):
     Most implementations will probably be based of this.
 
     """
-    def __rshift__(self, stepf: Callable[[Any, None, None], Any]) -> None:
+    def __rshift__(self, stepf: Callable[[Any, None, None], Any]) -> Piping:
         "Bitwise OR as simple function composition"
         return self.queue(stepf)
 
@@ -404,7 +396,7 @@ class LogicPiping(Piping):
         self.truthy = []
         self.conjunctions = 0
 
-    def logically(self, stepf, conjunction):
+    def logically(self, stepf, conjunction):  # type: ignore
         self.counter = itertools.count(1)
         if conjunction:
             self.conjunctions += 1

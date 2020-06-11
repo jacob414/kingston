@@ -9,7 +9,7 @@ from . import lang
 from dataclasses import dataclass
 from functools import singledispatch
 
-import funcy
+import funcy as fy
 
 
 @dataclass
@@ -123,21 +123,21 @@ def xget(obj, idx):
     "Does foo"
     if lang.isprimitive(obj):
         return obj
-    if callable(obj):
+    elif callable(obj):
         return obj(idx)  # ???
 
     def attempt_many():
         "Does attempt_many"
         vars_ = lang.pubvars(obj)
         attrs = fnmatch.filter(vars_, idx)
-        if funcy.is_seqcoll(obj) or isinstance(obj, set):
+        if fy.is_seqcoll(obj) or isinstance(obj, set):
             return attrs
         else:
             return [Attr.infer(attr, xget(obj, attr)) for attr in attrs]
 
     try:
         try:
-            return obj[lang.maybe_int(idx)]
+            return obj[idx]
         except KeyError:
             return attempt_many()
     except TypeError:
@@ -172,4 +172,4 @@ def idig(obj, path):
 def dig(obj, path):
     "Recursive query for attributes from `obj` by string spec."
 
-    return idig(obj, path.split('.'))
+    return idig(obj, lang.detect_numbers(path.split('.')))
