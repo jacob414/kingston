@@ -3,6 +3,8 @@
 import hashlib
 import fnmatch
 
+from typing import Any, Iterable
+
 from . import lang
 from dataclasses import dataclass
 from functools import singledispatch

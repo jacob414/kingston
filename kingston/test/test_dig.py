@@ -5,6 +5,8 @@ import pytest
 from altered import E
 
 from kingston import dig
+from kingston import decl
+
 from kingston import testing
 
 from hypothesis import given
