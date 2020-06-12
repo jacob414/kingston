@@ -8,10 +8,10 @@ import traceback
 
 import distutils.cmd
 
-import funcy  # type: ignore
+import funcy as fy
 import pytest  # type: ignore
 
-from altered import state  # type: ignore
+from altered import state, E  # type: ignore
 
 import pycodestyle  # type: ignore
 import mypy.api  # type: ignore
@@ -31,17 +31,6 @@ idx = lambda max_: st.integers(min_value=0, max_value=max_)
 
 # Simplified mirroring paramtrically lax ident, for testing convenience
 same = lambda *args, **kwargs: args[0] if len(args) == 1 else args
-
-
-@contextlib.contextmanager
-def bugtrap(*args, **kwargs):
-    try:
-        yield (args, kwargs)  # 1. Do
-    except:  # 2. Catch
-        type_, value, tb = sys.exc_info()
-        import ipdb
-        ipdb.set_trace()  # 3. ?
-        pass  # 4. Profit!
 
 
 class fixture(object):
@@ -116,7 +105,7 @@ class ReviewProject(distutils.cmd.Command):  # pragma: nocov
                 print('ERROR')
                 print(err)
 
-        issues = sum(funcy.walk_values(lambda x: x[0], reports).values())
+        issues = sum(fy.walk_values(lambda x: x[0], reports).values())
         if issues > 0:
             ReviewProject.separator_line()
             print()

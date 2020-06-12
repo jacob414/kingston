@@ -19,6 +19,8 @@ Primitive = Union[int, bool, float, str, set, list, tuple, dict, bytes]
 Listlike = Union[set, list, tuple]
 Singular = Union[Primitive, Callable]
 
+PipeCombineFn = Callable[[Any, None, None], Any]
+
 textual = fy.isa(*TEXTLIKE)
 numeric = fy.isa(numbers.Number)
 isint = fy.isa(int)

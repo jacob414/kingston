@@ -152,13 +152,13 @@ def test_isprim_type(type_: type, expected: Any) -> None:
     assert lang.isprim_type(type_) == expected
 
 
-int_or_same = lang.coerce_or_same(int)
+# int_or_same = lang.coerce_or_same(int)
 
 
 @fixture.params("value, expected", (1, 1), ('1', 1), ('x', 'x'))
 def test_coerce_or_same(value: Any, expected: Any) -> None:
     "Should convert strings with digits to `int`."
-    assert int_or_same(value) == expected
+    assert lang.num_or_else(value) == expected
 
 
 @pytest.fixture
@@ -166,14 +166,62 @@ def xe() -> lang.XE:
     yield lang.XE(foo='foo', bar='bar')
 
 
+@pytest.mark.wbox
 def test_xe_as_obj(xe: lang.XE) -> None:
     "Should "
     assert xe.foo == 'foo'
 
 
+@pytest.mark.wbox
+def test_xe_as_iteritems(xe: lang.XE) -> None:
+    "Should "
+    assert tuple(xe.iteritems()) == (('foo', 'foo'), ('bar', 'bar'))
+
+
+@pytest.mark.wbox
+def test_pubvars_dict() -> None:
+    assert set(lang.pubvars({'x': 'x', 'y': 'y'})) == {'x', 'y'}
+
+
+@pytest.mark.wbox
+def test_pubvars_list() -> None:
+    assert set(lang.pubvars([1, 2, 3])) == {1, 2, 3}
+
+
+@pytest.mark.wbox
+def test_pubvars_obj() -> None:
+    "Should pubvars"
+
+    class Cls(object):
+        def __init__(self, x, y):
+            self.x = x
+            self.y = y
+
+    assert set(lang.pubvars(Cls('x', 'y'))) == {'x', 'y'}
+
+
+@pytest.mark.wbox
 def test_xe_as_dict(xe: lang.XE) -> None:
     "Should be able to index XE object as dictionaries"
     assert xe['foo'] == 'foo'
+
+
+@pytest.mark.wbox
+def test_xe_as_attr(xe: lang.XE) -> None:
+    "Should be able to index XE object as dictionaries"
+    assert xe.foo == 'foo'
+
+
+@pytest.mark.wbox
+@fixture.params(
+    "obj, isprim",
+    (1, True),
+    ('foo', True),
+    (E(), False),
+)
+def test_isprim_type(obj: Any, isprim: bool) -> None:
+    "Should isp"
+    assert lang.isprimitive(obj) == isprim
 
 
 @pytest.fixture
@@ -240,6 +288,7 @@ def test_piping_as_mapping() -> None:
     """
     incr = lambda x: x + 1
     showr = "It is {}!".format
+
     assert (lang.ComposePiping(5) >> incr >> incr >> showr)() == "It is 7!"
 
 
@@ -296,6 +345,29 @@ def dispr() -> match.Match:
 
 
 @pytest.mark.wbox
+@fixture.params(
+    "obj, name",
+    ('Hello', 'str'),
+    (None, 'None'),
+    (E(a=1), 'Expando'),
+)
+def test_typename(obj, name) -> None:
+    "Should typename"
+    assert lang.typename(obj) == name
+
+
+def test_primbases() -> None:
+    """Should return the primitive baseclasses from an object
+    deriving from a primitive type.
+
+    """
+    class FromPrim(int):
+        pass
+
+    assert lang.primbases(FromPrim) == [int]
+
+
+@pytest.mark.wbox
 @fixture.params("disp, params, expected",
   (dispr(), (1, ), 2),
   (dispr(), (1, 2), 3),
@@ -303,3 +375,12 @@ def dispr() -> match.Match:
 def test_callbytype_variants(disp, params, expected) -> None:
     "Should dispatch calls to correct function based on instance types."
     assert disp(*params) == expected
+
+
+# @pytest.fixture
+# def xe():
+#     return lang.XE(foo='bar')
+
+# def test_xe_item(xe) -> None:
+#     "Should xe_item"
+#     assert xe['foo'] == 'bar'
