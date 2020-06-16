@@ -141,10 +141,9 @@ class Match(dict):
         except KeyError:
             pass
 
-    def case(*args: Any) -> Callable:
-        """Decorator to add a function. The types of the parameters. The types
-        that will be matched is taken from the signature of the
-        decorated function.
+    def case(self, *args: Any) -> Callable:
+        """Decorator to add a function. The types that will be matched is
+        taken from the signature of the decorated function.
 
         """
 
