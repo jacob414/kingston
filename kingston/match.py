@@ -147,7 +147,7 @@ class Match(dict):
 
         """
 
-        self, fn = args
+        fn = fy.first(args)
         params = lang.params(fn)  # type: ignore
         disp = tuple(arg.annotation for arg in params.values())
 
