@@ -4,7 +4,7 @@ import pytest
 
 from string import printable
 
-from typing import Any, Iterable, Union, Tuple, Generic, TypeVar
+from typing import Any, Iterable, Union, Tuple, Generic, TypeVar, Mapping
 
 from hypothesis import given
 from hypothesis import strategies as st
@@ -121,6 +121,10 @@ def tmatch() -> Match:
     def superspecial_float_substraction(x: float, y: float, present: str):
         return present.format(x + y)
 
+    @matcher.case
+    def only_kwargs(**kwags: Mapping[str, Any]):
+        return dict(kwargs, kw='kw')
+
     return matcher
 
 
@@ -145,6 +149,11 @@ def test_tmatch_simple_conflict(tmatch) -> None:
 def test_tmatch_hits(tmatch: Match, value, expected) -> None:
     "Should hit known values"
     assert tmatch(value) == expected
+
+
+def test_tmatch_only_kwargs(tmatch: Match) -> None:
+    "Should tmatch_only_kwargs"
+    assert tmatch(x=1) == {'x': 1, 'kw': 'kw'}
 
 
 @pytest.fixture

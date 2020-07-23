@@ -12,8 +12,11 @@ from pysistence import Expando
 from typing import (Any, Mapping, List, Tuple, Iterable, Generator, Callable,
                     Union, TYPE_CHECKING)
 import inspect
+from inspect import Parameter
+
 from . import pipelib
 from . import decl
+from .primitives import Narrowable
 
 import itertools
 
@@ -21,7 +24,7 @@ from functools import wraps, update_wrapper
 
 import operator as ops
 
-from .decl import (PRIMTYPES, textual, numeric, isdict, isgen)
+from .decl import (PRIMTYPES, textual, numeric, isdict, isgen, iseq)
 
 
 def unfold_gen(x: Generator[Any, None, None],

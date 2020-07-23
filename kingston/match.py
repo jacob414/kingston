@@ -8,9 +8,16 @@ import funcy as fy  # type: ignore
 from funcy import compact, flatten, walk
 from . import lang
 
+import inspect
+from inspect import Parameter
+
 from kingston import decl
-from kingston.decl import box, unbox, Singular
+from kingston.decl import box, unbox, Singular, iseq
 from kingston import xxx_kind as kind
+
+from operator import attrgetter
+
+from sspipe import p
 
 
 class Mismatch(ValueError):
@@ -36,8 +43,8 @@ class Miss:
     "Symbol for a non-breaking miss."
 
 
-def match(cand: PatternCand,
-          pattern: Union[Iterable, Any, decl.Singular]) -> bool:
+def match(cand: PatternCand, pattern: Union[Iterable, Any,
+                                            decl.Singular]) -> bool:
     cand = kind.cast_to_hashable(cand)
     pattern = kind.cast_to_hashable(pattern)
 
@@ -91,8 +98,8 @@ def genmatches(cand: PatternCand,
 
 
 def matches(
-        cand: Any,
-        pattern: Iterable[Any],
+    cand: Any,
+    pattern: Iterable[Any],
 ) -> FoundPattern:
     """Decides how composite data structures should be matched, performs
     matching.
@@ -123,6 +130,17 @@ def matches(
     raise Mismatch(
         f"kingston.match.matches(): Can't find {cand!r} in {pattern!r}")
 
+def resolve_pattern(*params:Any, **opts:Any) -> TypePatternCand:
+    pass
+
+def resolve_call_parameters(*params: Any, **opt) -> Tuple[Iterable[Any], Mapping[str, Any]]:
+    pass
+
+
+def call_pattern(fn:Callable, params:Tuple, options:Mapping[str, Any]) -> Any:
+    pass
+
+# return call_pattern(self[resolve_call_parameters(args, opts)], param, opts)
 
 class Match(dict):
     """Multiple dispatch as a callable subclass of `dict`:
@@ -147,12 +165,25 @@ class Match(dict):
 
         """
 
+        params = args
+
         fn = fy.first(args)
         params = lang.params(fn)  # type: ignore
-        disp = tuple(arg.annotation for arg in params.values())
+        positional = tuple(
+            filter(iseq(Parameter.POSITIONAL_OR_KEYWORD), params))
+        haskw = any(
+            filter(decl.iseq(Parameter.VAR_KEYWORD),
+                   map(attrgetter('kind'), params.values())))
+
+        disp = tuple(arg.annotation for arg in params.values()
+                     if arg.annotation != inspect._empty)
+
+        if haskw:
+            disp = (*disp, dict)
 
         self.checkpred(disp, None)
         self[disp] = fn
+        print(f"{disp!r} = {fn}")
 
         return fn
 
@@ -167,10 +198,28 @@ class Match(dict):
             # TODO: probably need some Generic/Protocol thingy (3.8 +)
             T = type(fparams)  # type: ignore
 
+        if opts and not fparams:
+            T = dict
+        elif fparams and opts:
+            T = (*T, dict)
+
         key = matches(T, tuple(self))
         call = self[key]
+        arity = lang.arity(call)
 
-        return call() if lang.arity(call) == 0 else call(*box(fparams), **opts)
+        positional = fparams
+        keyword = opts
+        if arity == 0:
+            positional = ()
+            keyword = {}
+
+        try:
+            return call(*positional, **keyword)
+        except Exception as exc:
+            print(exc)
+            import ipdb
+            ipdb.set_trace()
+            call(*positional, **keyword)
 
     def __call__(self, *params: Any,
                  **opts: Any) -> Union[Iterable[Any], Iterable]:

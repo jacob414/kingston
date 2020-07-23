@@ -7,6 +7,7 @@ import numbers
 import collections
 import funcy as fy
 import types
+import operator
 
 from functools import wraps
 
@@ -26,7 +27,7 @@ numeric = fy.isa(numbers.Number)
 isint = fy.isa(int)
 isdict = fy.isa(dict)
 isgen = fy.isa(types.GeneratorType)
-
+iseq = fy.curry(operator.eq)
 
 def unbox(x: Any) -> Singular:
     """
@@ -45,6 +46,7 @@ def unbox(x: Any) -> Singular:
     if callable(x):
 
         @wraps(x)
+
         def decorate(*params: Any, **opts: Any) -> Any:
             return do(x(*params, **opts))
 
