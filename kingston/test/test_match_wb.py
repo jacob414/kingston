@@ -26,17 +26,17 @@ pytestmark = pytest.mark.wbox
 
 @fixture.params(
     "value, pattern, expected",
-    (1, 1, 1),
-    (1, Any, 1),
-    ('x', 1, ()),
-    (1.1, 1, ()),
-    (object(), 1, ()),
-    (Match(), 1, ()),
-    ((1,2,3), (1,2,3), (1,2,3)),
+    (1, 1, True),
+    (1, Any, True),
+    ('x', 1, False),
+    (1.1, 1, False),
+    (object(), 1, False),
+    (Match(), 1, False),
+    ((1,2,3), (1,2,3), True),
 )  # yapf: disable
 def test_match1(value, pattern, expected) -> None:
     "Should match_hit"
-    match(value, pattern) == expected
+    assert match.match(value, pattern) == expected
 
 
 @pytest.mark.slow
