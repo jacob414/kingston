@@ -16,7 +16,9 @@ from kingston.dig import dig
 import funcy
 from funcy import flow
 
-from kingston.match import (Match, VMatch, Mismatch, Malformed, matches, match,
+from kingston import match
+
+from kingston.match import (Match, VMatch, Mismatch, Malformed, matches,
                             Conflict)
 
 from kingston.testing import (between, ints, diff_ints, int_or_none, idx, same)
