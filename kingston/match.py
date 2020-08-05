@@ -164,9 +164,6 @@ class Match(dict):
         taken from the signature of the decorated function.
 
         """
-
-        params = args
-
         fn = fy.first(args)
         params = lang.params(fn)  # type: ignore
         positional = tuple(
