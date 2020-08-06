@@ -17,7 +17,7 @@ import funcy
 from funcy import flow
 
 from kingston.match import (Match, VMatch, Mismatch, Malformed, matches, match,
-                            Conflict)
+                            primparams, Conflict)
 
 from kingston.testing import (between, ints, diff_ints, int_or_none, idx, same)
 
@@ -101,6 +101,34 @@ def test_matches_nary_hits(value: Any, pattern: Iterable) -> None:
                 )  # yapf: disable
 def test_matches_nary_miss(value: Any, pattern: Iterable) -> None:
     "Should match known values absent from known iterables."
+
+
+@pytest.fixture
+def empty_matcher():
+    return Match()
+
+
+def one_int(x: int) -> int:
+    return 1.0
+
+
+def two_int(a: int, b: int) -> int:
+    return a + b
+
+
+def one_int_and_kw(a: int, **kwargs: Any):
+    return a
+
+
+@fixture.params(
+    "fn, params",
+    (one_int, int),
+    (two_int, (int, int)),
+    (one_int_and_kw, (int, Mapping)),
+)
+def test_primparams(fn, params) -> None:
+    "Should convert function signatures to Python primitive(s)."
+    assert primparams(fn) == params
 
 
 @pytest.fixture
