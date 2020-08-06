@@ -203,6 +203,11 @@ class Match(dict):
 
         return fn
 
+    def default(self, fn):
+        "Assigns a default matching"
+        self[Default] = fn
+        return fn
+
     def matching(
         self, params: Tuple[Any], opts: Dict[str, Any]
     ) -> Tuple[TypePatternCand, Tuple[Any], Dict[str, Any]]:
@@ -227,7 +232,14 @@ class Match(dict):
         elif fparams and opts:
             T = (*T, dict)
 
-        key = matches(T, tuple(self))
+        try:
+            key = matches(T, tuple(self))
+        except Mismatch:
+            if Default in self:
+                key = Default
+            else:
+                raise
+
         call = self[key]
 
         return call(*positional, **keyword)
@@ -259,7 +271,11 @@ class VMatch(Match):
 
         """
         fparams = unbox(params)
-        key = matches(fparams, tuple(self))
+        try:
+            key = matches(fparams, tuple(self))
+        except Mismatch:
+            key = Default
+
         call = self[key]
         return call() if lang.arity(call) == 0 else call(*fparams, **opts)
 

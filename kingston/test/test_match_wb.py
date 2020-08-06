@@ -16,8 +16,8 @@ from kingston.dig import dig
 import funcy
 from funcy import flow
 
-from kingston.match import (Match, VMatch, Mismatch, Malformed, matches, match,
-                            primparams, Conflict)
+from kingston.match import (Match, Default, VMatch, Mismatch, Malformed,
+                            matches, match, primparams, Conflict)
 
 from kingston.testing import (between, ints, diff_ints, int_or_none, idx, same)
 
@@ -179,6 +179,22 @@ def test_tmatch_hits(tmatch: Match, value, expected) -> None:
     assert tmatch(value) == expected
 
 
+def test_tmatch_default_decl() -> None:
+    "Should handle unmatched calls if ´Default` is defined when initialized"
+    match = Match({Default: lambda *args, **kwargs: 'default'})
+    assert match('lksflkjl', x=1) == 'default'
+
+
+def test_tmatch_default_deco(tmatch: Match) -> None:
+    "Should handle unmatched calls if ´Default` is defined via decorator"
+
+    @tmatch.default
+    def default(*params, **kwargs):
+        return 'default'
+
+    assert tmatch('lksflkjl', x=1) == 'default'
+
+
 def test_tmatch_only_kwargs(tmatch: Match) -> None:
     "Should tmatch_only_kwargs"
     assert tmatch(x=1) == {'x': 1, 'kw': 'kw'}
@@ -245,3 +261,19 @@ def test_vmatch_misses(vmatch, param) -> None:
     "Should miss values known not to be present."
     with pytest.raises(Mismatch):
         vmatch(param)
+
+
+def test_vmatch_default_decl() -> None:
+    "Should handle unmatched calls if ´Default` is defined when initialized"
+    match = Match({Default: lambda *args, **kwargs: 'default'})
+    assert match('lksflkjl', x=1) == 'default'
+
+
+def test_vmatch_default_deco(vmatch: VMatch) -> None:
+    "Should handle unmatched calls if ´Default` is defined via decorator"
+
+    @vmatch.default
+    def default(*params, **kwargs):
+        return 'default'
+
+    assert vmatch('lksflkjl', x=1) == 'default'
