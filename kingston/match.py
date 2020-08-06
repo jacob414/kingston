@@ -1,10 +1,12 @@
 # yapf
 
-from typing import (Any, Type, Iterator, Iterable, Generator, Callable, Union,
-                    Collection, cast)
+from typing import (Any, Type, Iterator, Iterable, Tuple, Mapping, Dict,
+                    Generator, Callable, Union, Collection, cast)
 from itertools import zip_longest as zip
 
 import funcy as fy  # type: ignore
+from whatever import _  # type: ignore
+
 from funcy import compact, flatten, walk
 from . import lang
 
@@ -17,7 +19,14 @@ from kingston import xxx_kind as kind
 
 from operator import attrgetter
 
+POSITIONAL = (Parameter.POSITIONAL_ONLY, Parameter.POSITIONAL_OR_KEYWORD)
+KEYWORD = (Parameter.KEYWORD_ONLY, )
+
 from sspipe import p
+
+
+class Default:
+    "Symbol for a default function to call if no matching was made."
 
 
 class Mismatch(ValueError):
@@ -41,6 +50,23 @@ FoundPattern = Union[PatternCand, object, Collection[decl.Singular]]
 
 class Miss:
     "Symbol for a non-breaking miss."
+
+
+ispos = lambda p: p.kind in POSITIONAL and p or False
+iskw = lambda p: p.kind in KEYWORD and p or False
+
+
+def primparams(fn: Callable) -> Union[Singular, Tuple[Any]]:
+    "Aproximate type signature of function `fn´ in Python primitive types"
+    fullparams = lang.params(fn)
+    params = lambda: filter(lambda p: p.default is inspect._empty,
+                            fullparams.values())
+
+    positional = map(_.annotation, filter(ispos, params()))
+    keyword = map(_.annotation, filter(iskw, params()))
+    var = (Mapping, ) if any(p for p in params()
+                             if p.kind == Parameter.VAR_KEYWORD) else ()
+    return unbox(tuple(fy.chain(positional, keyword, var)))
 
 
 def match(cand: PatternCand, pattern: Union[Iterable, Any,
@@ -130,17 +156,23 @@ def matches(
     raise Mismatch(
         f"kingston.match.matches(): Can't find {cand!r} in {pattern!r}")
 
-def resolve_pattern(*params:Any, **opts:Any) -> TypePatternCand:
-    pass
 
-def resolve_call_parameters(*params: Any, **opt) -> Tuple[Iterable[Any], Mapping[str, Any]]:
-    pass
+def resolve_pattern(params: Any, opts: Any) -> TypePatternCand:
+    return unbox(fy.compact((unbox(params), opts)))
 
 
-def call_pattern(fn:Callable, params:Tuple, options:Mapping[str, Any]) -> Any:
+def resolve_call_parameters(
+        params: Any, opts: Dict[str,
+                                Any]) -> Tuple[Iterable[Any], Dict[str, Any]]:
+    return box(unbox(params)), opts
+
+
+def call_pattern(fn: Callable, params: Tuple, options: Dict[str, Any]) -> Any:
     pass
+
 
 # return call_pattern(self[resolve_call_parameters(args, opts)], param, opts)
+
 
 class Match(dict):
     """Multiple dispatch as a callable subclass of `dict`:
@@ -165,34 +197,29 @@ class Match(dict):
 
         """
         fn = fy.first(args)
-        params = lang.params(fn)  # type: ignore
-        positional = tuple(
-            filter(iseq(Parameter.POSITIONAL_OR_KEYWORD), params))
-        haskw = any(
-            filter(decl.iseq(Parameter.VAR_KEYWORD),
-                   map(attrgetter('kind'), params.values())))
-
-        disp = tuple(arg.annotation for arg in params.values()
-                     if arg.annotation != inspect._empty)
-
-        if haskw:
-            disp = (*disp, dict)
-
+        disp = primparams(fn)
         self.checkpred(disp, None)
         self[disp] = fn
-        print(f"{disp!r} = {fn}")
 
         return fn
 
+    def matching(
+        self, params: Tuple[Any], opts: Dict[str, Any]
+    ) -> Tuple[TypePatternCand, Tuple[Any], Dict[str, Any]]:
+
+        match_cand = resolve_pattern(params, opts)
+        positional, keyword = resolve_call_parameters(params, opts)
+        return match_cand, positional, keyword
+
     def type_match(self, *params: Any, **opts: Any) -> Any:
         "Does type_match"
-        fparams = cast(TypePatternCand, unbox(params))
+        fparams, positional, keyword = self.matching(params, opts)
+
         if fy.is_seqcoll(fparams):
             fparams = cast(ComplexTypeCand, fparams)
             T = cast(ComplexTypeCand, tuple(type(p) for p in fparams))
         else:
-            fparams = cast(Any, fparams)
-            # TODO: probably need some Generic/Protocol thingy (3.8 +)
+            fparams = cast(SingularTypeCand, fparams)
             T = type(fparams)  # type: ignore
 
         if opts and not fparams:
@@ -202,24 +229,10 @@ class Match(dict):
 
         key = matches(T, tuple(self))
         call = self[key]
-        arity = lang.arity(call)
 
-        positional = fparams
-        keyword = opts
-        if arity == 0:
-            positional = ()
-            keyword = {}
+        return call(*positional, **keyword)
 
-        try:
-            return call(*positional, **keyword)
-        except Exception as exc:
-            print(exc)
-            import ipdb
-            ipdb.set_trace()
-            call(*positional, **keyword)
-
-    def __call__(self, *params: Any,
-                 **opts: Any) -> Union[Iterable[Any], Iterable]:
+    def __call__(self, *params: Any, **opts: Any) -> Union[Tuple[Any], Tuple]:
         "Return the value keyed by the type of parameter `obj`"
         return self.type_match(*params, **opts)
 
@@ -263,8 +276,7 @@ class VMatch(Match):
 
         return wrap
 
-    def __call__(self, *params: Any,
-                 **opts: Any) -> Union[Iterable[Any], Iterable]:
+    def __call__(self, *params: Any, **opts: Any) -> Union[Tuple[Any], Tuple]:
         """
         Handle call to this instance.
         """
