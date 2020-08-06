@@ -19,6 +19,8 @@ MUTABLE = {list, set, dict}
 Primitive = Union[int, bool, float, str, set, list, tuple, dict, bytes]
 Listlike = Union[set, list, tuple]
 Singular = Union[Primitive, Callable]
+Plural = Union[set, list, tuple, dict]
+Dualism = Union[Singular, Plural]
 
 PipeCombineFn = Callable[[Any, None, None], Any]
 
