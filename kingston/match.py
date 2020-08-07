@@ -274,7 +274,10 @@ class VMatch(Match):
         try:
             key = matches(fparams, tuple(self))
         except Mismatch:
-            key = Default
+            if Default in self:
+                key = Default
+            else:
+                raise
 
         call = self[key]
         return call() if lang.arity(call) == 0 else call(*fparams, **opts)
