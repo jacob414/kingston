@@ -120,9 +120,14 @@ def one_int_and_kw(a: int, **kwargs: Any):
     return a
 
 
+def only_kw(**kwargs):
+    return Mapping
+
+
 @fixture.params(
     "fn, params",
     (one_int, int),
+    (only_kw, Mapping),
     (two_int, (int, int)),
     (one_int_and_kw, (int, Mapping)),
 )
