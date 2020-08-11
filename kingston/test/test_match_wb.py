@@ -155,7 +155,7 @@ def tmatch() -> Match:
         return present.format(x + y)
 
     @matcher.case
-    def only_kwargs(**kwags: Mapping[str, Any]):
+    def only_kwargs(**kwargs: Any):
         return dict(kwargs, kw='kw')
 
     return matcher

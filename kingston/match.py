@@ -1,5 +1,7 @@
 # yapf
 
+import os
+
 from typing import (Any, Type, Iterator, Iterable, Tuple, Mapping, Dict,
                     Generator, Callable, Union, Collection, cast)
 from itertools import zip_longest as zip
@@ -14,15 +16,11 @@ import inspect
 from inspect import Parameter
 
 from kingston import decl
-from kingston.decl import box, unbox, Singular, iseq
+from kingston.decl import box, unbox, Singular
 from kingston import xxx_kind as kind
-
-from operator import attrgetter
 
 POSITIONAL = (Parameter.POSITIONAL_ONLY, Parameter.POSITIONAL_OR_KEYWORD)
 KEYWORD = (Parameter.KEYWORD_ONLY, )
-
-from sspipe import p
 
 
 class Default:
@@ -59,7 +57,8 @@ iskw = lambda p: p.kind in KEYWORD and p or False
 def primparams(fn: Callable) -> Union[Singular, Tuple[Any]]:
     "Aproximate type signature of function `fn´ in Python primitive types"
     fullparams = lang.params(fn)
-    params = lambda: filter(lambda p: p.default is inspect._empty,
+
+    params = lambda: filter(lambda p: p.default is inspect.Signature.empty,
                             fullparams.values())
 
     positional = map(_.annotation, filter(ispos, params()))
@@ -157,14 +156,23 @@ def matches(
         f"kingston.match.matches(): Can't find {cand!r} in {pattern!r}")
 
 
+def arg_symbolic(params: Iterable, opts: Mapping):
+    compacted = fy.compact((*params, opts))
+    return tuple((Mapping if type(p) is dict else p) for p in compacted)
+
+
 def resolve_pattern(params: Any, opts: Any) -> TypePatternCand:
-    return unbox(fy.compact((unbox(params), opts)))
+    return unbox(arg_symbolic(params, opts))
 
 
 def resolve_call_parameters(
         params: Any, opts: Dict[str,
                                 Any]) -> Tuple[Iterable[Any], Dict[str, Any]]:
-    return box(unbox(params)), opts
+    symbolic = arg_symbolic(params, opts)
+    if symbolic is (Mapping, ):
+        params = cast(Iterable[Any], unbox(symbolic))
+
+    return params, opts
 
 
 def call_pattern(fn: Callable, params: Tuple, options: Dict[str, Any]) -> Any:
@@ -231,19 +239,14 @@ class Match(dict):
 
     def type_match(self, *params: Any, **opts: Any) -> Any:
         "Does type_match"
-        fparams, positional, keyword = self.matching(params, opts)
+        T, positional, keyword = self.matching(params, opts)
 
-        if fy.is_seqcoll(fparams):
-            fparams = cast(ComplexTypeCand, fparams)
-            T = cast(ComplexTypeCand, tuple(type(p) for p in fparams))
+        if fy.is_seqcoll(T):
+            T = cast(ComplexTypeCand, tuple(type(p) for p in T))
+        elif T is Mapping:  # keyword arg only
+            pass
         else:
-            fparams = cast(SingularTypeCand, fparams)
-            T = type(fparams)  # type: ignore
-
-        if opts and not fparams:
-            T = dict
-        elif fparams and opts:
-            T = (*T, dict)
+            T = type(T)  # type: ignore
 
         try:
             key = matches(T, tuple(self))
