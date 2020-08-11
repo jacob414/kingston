@@ -182,6 +182,19 @@ class Match(dict):
     will further process the instance.
 
     """
+    def explain(self, out=False):
+        lines = (f"- A {self.__class__.__name__}", )
+        for matching in self:
+            fn = self[matching]
+            name = getattr(fn, '__name__', '?')
+            lines = (*lines, f"    - {matching!r} : {name}")
+
+        text = os.linesep.join(lines)
+        if out:
+            print(text)
+        else:
+            return text
+
     def checkpred(self, key: Any, value: Any) -> None:
         try:
             key = unbox(key)
