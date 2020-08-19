@@ -56,7 +56,7 @@ iskw = lambda p: p.kind in KEYWORD and p or False
 
 def primparams(fn: Callable) -> Union[Singular, Tuple[Any]]:
     "Aproximate type signature of function `fn´ in Python primitive types"
-    fullparams = lang.params(fn)
+    fullparams = lang.params(fn)  # type: ignore
 
     params = lambda: filter(lambda p: p.default is inspect.Signature.empty,
                             fullparams.values())
@@ -165,23 +165,6 @@ def resolve_pattern(params: Any, opts: Any) -> TypePatternCand:
     return unbox(arg_symbolic(params, opts))
 
 
-def resolve_call_parameters(
-        params: Any, opts: Dict[str,
-                                Any]) -> Tuple[Iterable[Any], Dict[str, Any]]:
-    symbolic = arg_symbolic(params, opts)
-    if symbolic is (Mapping, ):
-        params = cast(Iterable[Any], unbox(symbolic))
-
-    return params, opts
-
-
-def call_pattern(fn: Callable, params: Tuple, options: Dict[str, Any]) -> Any:
-    pass
-
-
-# return call_pattern(self[resolve_call_parameters(args, opts)], param, opts)
-
-
 class Match(dict):
     """Multiple dispatch as a callable subclass of `dict`:
 
@@ -190,11 +173,11 @@ class Match(dict):
     will further process the instance.
 
     """
-    def explain(self, out=False):
+    def explain(self, out=False):  # pragma: nocov
         lines = (f"- A {self.__class__.__name__}", )
         for matching in self:
             fn = self[matching]
-            lines = (*lines, f"    - {matching!r} : {fn.__name__}")
+            lines = (*lines, f"    - {matching!r} : {kind.nick(fn)}")
 
         text = os.linesep.join(lines)
         if out:
@@ -232,20 +215,13 @@ class Match(dict):
         self[Default] = fn
         return fn
 
-    def matching(
-        self, params: Tuple[Any], opts: Dict[str, Any]
-    ) -> Tuple[TypePatternCand, Tuple[Any], Dict[str, Any]]:
-
-        match_cand = resolve_pattern(params, opts)
-        positional, keyword = resolve_call_parameters(params, opts)
-        return match_cand, positional, keyword
-
     def type_match(self, *params: Any, **opts: Any) -> Any:
         "Does type_match"
-        T, positional, keyword = self.matching(params, opts)
+        T = resolve_pattern(params, opts)
 
         if fy.is_seqcoll(T):
-            T = cast(ComplexTypeCand, tuple(type(p) for p in T))
+            # T = cast(ComplexTypeCand, tuple(type(p) for p in T))
+            T = cast(ComplexTypeCand, kind.xrtype(T))
         elif T is Mapping:  # keyword arg only
             pass
         else:
@@ -261,7 +237,7 @@ class Match(dict):
 
         call = self[key]
 
-        return call(*positional, **keyword)
+        return call(*box(unbox(params)), **opts)
 
     def __call__(self, *params: Any, **opts: Any) -> Union[Tuple[Any], Tuple]:
         "Return the value keyed by the type of parameter `obj`"
