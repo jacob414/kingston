@@ -194,7 +194,7 @@ def mkclass(name: str, bases: Tuple = (), **clsattrs: Any) -> Any:
     return Gen
 
 
-def params(fn: Callable) -> Mapping[str, Any]:
+def params(fn: Callable) -> Mapping[str, Parameter]:
     return inspect.signature(fn).parameters
 
 
