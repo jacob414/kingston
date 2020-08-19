@@ -53,13 +53,13 @@ def nick(x: Any) -> str:
     `'None'`
 
     >>> nick(1)
-    int
+    'int'
     >>> nick([1,2])
-    list
+    'list'
     >>> nick(None)
-    None
+    'None'
     """
-    kind = type(x).__name__
+    kind = getattr(x, '__name__', getattr(type(x), '__name__', '?'))
     return x is None and 'None' or kind
 
 
