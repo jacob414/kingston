@@ -81,7 +81,7 @@ def xrtype(arg: Any) -> Union[type, Tuple[type]]:
 
     if arity == 0:
         return type_
-    elif arity > 1:
+    elif fy.is_seqcoll(arg):
         return cast(Union[type, Tuple[type]], tuple(xrtype(el) for el in arg))
     else:
         raise TypeError(f"kingston.kind.xrtype: doesn't understand {arg!r}")
