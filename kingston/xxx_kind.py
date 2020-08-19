@@ -12,38 +12,6 @@ Mutable = Union[list, set, dict]
 Immutable = Union[tuple, str, bytes, list, int, bool, float]
 
 
-class FrozenDict(collections.abc.Mapping):
-    # Thank you Mike Graham! (https://stackoverflow.com/a/2704866/288672)
-    "Tries to get as possible close to a true frozen dict type"
-
-    def __init__(self, *args, **kwargs):
-        "Create from dict and an 'update'"
-        self._d = dict(*args, **kwargs)
-        self._hash = None
-
-    def __iter__(self):
-        return iter(self._d)
-
-    def __len__(self):
-        return len(self._d)
-
-    def __getitem__(self, key):
-        return self._d[key]
-
-    def __hash__(self):
-        # It would have been simpler and maybe more obvious to
-        # use hash(tuple(sorted(self._d.iteritems()))) from this discussion
-        # so far, but this solution is O(n). I don't know what kind of
-        # n we are going to run into, but sometimes it's hard to resist the
-        # urge to optimize when it will gain improved algorithmic performance.
-        if self._hash is None:
-            hash_ = 0
-            for pair in self.items():
-                hash_ ^= hash(pair)
-            self._hash = hash_
-        return self._hash
-
-
 def fromiter(objs: Iterable[Any]) -> List[type]:
     return [type(ob) for ob in objs]
 
@@ -143,16 +111,3 @@ def anyhash(x: Any) -> int:
         return hash(x)
     except TypeError:
         return forcehash(x)
-
-
-# from kingston.decl import Immutable  # XXX ??? borde redan vara importerad?
-
-
-def mute(mut: Mutable) -> Immutable:
-    if isdict(mut):
-        return cast(Callable, cast(FrozenDict, mut))(mut)
-    if fy.is_seqcoll(mut):
-        mut = cast(Mutable, mut)
-        return tuple(el for el in mut)
-    raise NotImplementedError(
-        f"kingston.kind.mute(): don't know how to handle {mut!r}")
