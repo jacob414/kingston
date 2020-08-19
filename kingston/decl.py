@@ -45,10 +45,8 @@ def unbox(x: Any) -> Singular:
     do: Callable[[Any], Any] = lambda x: x[0] if fy.is_seqcoll(x) and len(
         x) == 1 else x
 
-    if callable(x):
-
+    if callable(x) and x not in PRIMTYPES:
         @wraps(x)
-
         def decorate(*params: Any, **opts: Any) -> Any:
             return do(x(*params, **opts))
 
