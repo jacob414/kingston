@@ -174,7 +174,7 @@ def test_tmatch_simple_conflict(tmatch) -> None:
 @pytest.mark.parametrize("value, expected", (
     ('x', 'Hello, x!'),
     (2, 6),
-    ((2, '*'), '**'),
+    ((2, 'x'), 'xx'),
     ((2, [1]), [[1], [1]]),
     (2.2, 1.1),
     ((1.0, 1.1, "Result {}."), "Result 2.1."),

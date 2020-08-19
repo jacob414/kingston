@@ -194,14 +194,17 @@ class Match(dict):
         lines = (f"- A {self.__class__.__name__}", )
         for matching in self:
             fn = self[matching]
-            name = getattr(fn, '__name__', '?')
-            lines = (*lines, f"    - {matching!r} : {name}")
+            lines = (*lines, f"    - {matching!r} : {fn.__name__}")
 
         text = os.linesep.join(lines)
         if out:
             print(text)
         else:
             return text
+
+    @property
+    def __name__(self):
+        return self.__class__.__name__
 
     def checkpred(self, key: Any, value: Any) -> None:
         try:
