@@ -63,9 +63,15 @@ def primparams(fn: Callable) -> Union[Singular, Tuple[Any]]:
 
     positional = map(_.annotation, filter(ispos, params()))
     keyword = map(_.annotation, filter(iskw, params()))
-    var = (Mapping, ) if any(p for p in params()
-                             if p.kind == Parameter.VAR_KEYWORD) else ()
-    return unbox(tuple(fy.chain(positional, keyword, var)))
+
+    kind = _.kind
+
+    variadic = tuple(... for x in fullparams.values()
+                     if kind(x) == Parameter.VAR_POSITIONAL) + tuple(
+                         Mapping for x in fullparams.values()
+                         if kind(x) == Parameter.VAR_KEYWORD)
+
+    return unbox(tuple(fy.chain(positional, keyword, variadic)))
 
 
 def match(cand: PatternCand, pattern: Union[Iterable, Any,
