@@ -81,9 +81,7 @@ def match(cand: PatternCand, pattern: Union[Iterable, Any,
 
     accepted = {cand, Any}
 
-    if pattern in accepted: return True
-
-    return False
+    return True if pattern in accepted else False
 
 
 def wildcarded(pairs: Iterator) -> FoundPattern:
