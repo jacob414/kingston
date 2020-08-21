@@ -79,8 +79,9 @@ def match(cand: PatternCand, pattern: Union[Iterable, Any,
     cand = kind.cast_to_hashable(cand)
     pattern = kind.cast_to_hashable(pattern)
 
-    if cand == pattern: return True
-    if pattern is Any: return True
+    accepted = {cand, Any}
+
+    if pattern in accepted: return True
 
     return False
 
