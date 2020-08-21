@@ -11,6 +11,7 @@ from whatever import _  # type: ignore
 
 from funcy import compact, flatten, walk
 from . import lang
+from . import fsm
 
 import inspect
 from inspect import Parameter
@@ -74,47 +75,43 @@ def primparams(fn: Callable) -> Union[Singular, Tuple[Any]]:
     return unbox(tuple(fy.chain(positional, keyword, variadic)))
 
 
-class Pending:
-    """Documentation for Pending
-
-    """
-
-
-class MatchState(object):
+class MatchState(fsm.FSM):
     """Documentation for MatchState
 
     """
     def __init__(self):
-        super(MatchState, self).__init__()
+        super(MatchState, self).__init__('pending')
         self.hits = 0
         self.cc = 0
         self.pc = 0
         self.peek = None
-        self.ff = Pending
         self.cursor = None
 
-    def advance(self, val):
+    @fsm.state('fastforward')
+    def resolve(self, val):
         self.hits += 1
         self.cursor = val
-        self.ff = Pending
-        return 'next'
+        return self.transit('fastforward->pending', at=val)
 
+    @fsm.transits('pending->fastforward')
     def ff_start(self, at):
         self.ff = at
         self.cursor = at
         self.cc += 1
-        return 'fastforward'
 
+    @fsm.state('fastforward')
     def is_ff(self):
-        return self.ff is not Pending
+        return True
 
+    @fsm.state('fastforward')
     def ff_step(self):
         self.cc += 1
 
+    @fsm.state('fastforward')
     def ff_break(self, val):
-        self.ff = Pending
         self.cursor = val
         self.pc += 1
+        return self.transition('pending', val)
 
     def sum(self):
         cursor = '(no cursor)' if self.cursor is None else f"cursor: {self.cursor}"
@@ -122,7 +119,7 @@ class MatchState(object):
 
         print(devtool.out(f"""
         cc {self.cc}, pc {self.pc},
-        ff: {self.ff}, {cursor}, peeking at {self.peek},""",
+        state: {self.state}, {cursor}, peeking at {self.peek},""",
                           self=self, cursor=cursor))  # yapf: disable
 
 
