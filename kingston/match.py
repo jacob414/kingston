@@ -74,6 +74,58 @@ def primparams(fn: Callable) -> Union[Singular, Tuple[Any]]:
     return unbox(tuple(fy.chain(positional, keyword, variadic)))
 
 
+class Pending:
+    """Documentation for Pending
+
+    """
+
+
+class MatchState(object):
+    """Documentation for MatchState
+
+    """
+    def __init__(self):
+        super(MatchState, self).__init__()
+        self.hits = 0
+        self.cc = 0
+        self.pc = 0
+        self.peek = None
+        self.ff = Pending
+        self.cursor = None
+
+    def advance(self, val):
+        self.hits += 1
+        self.cursor = val
+        self.ff = Pending
+        return 'next'
+
+    def ff_start(self, at):
+        self.ff = at
+        self.cursor = at
+        self.cc += 1
+        return 'fastforward'
+
+    def is_ff(self):
+        return self.ff is not Pending
+
+    def ff_step(self):
+        self.cc += 1
+
+    def ff_break(self, val):
+        self.ff = Pending
+        self.cursor = val
+        self.pc += 1
+
+    def sum(self):
+        cursor = '(no cursor)' if self.cursor is None else f"cursor: {self.cursor}"
+        from . import devtool
+
+        print(devtool.out(f"""
+        cc {self.cc}, pc {self.pc},
+        ff: {self.ff}, {cursor}, peeking at {self.peek},""",
+                          self=self, cursor=cursor))  # yapf: disable
+
+
 def match(cand: PatternCand, pattern: Union[Iterable, Any,
                                             decl.Singular]) -> bool:
     cand = kind.cast_to_hashable(cand)
