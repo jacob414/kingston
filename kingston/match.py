@@ -2,8 +2,8 @@
 
 import os
 
-from typing import (Any, Type, Iterator, Iterable, Tuple, Mapping, Dict,
-                    Generator, Callable, Union, Collection, cast)
+from typing import (Any, Type, Iterator, Iterable, Tuple, Mapping, Generator,
+                    Callable, Union, Collection, cast)
 from itertools import zip_longest as zip
 
 import funcy as fy  # type: ignore
