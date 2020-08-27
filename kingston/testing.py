@@ -1,10 +1,12 @@
 # yapf
 
+import os
 import sys
 import io
-from typing import Any, Tuple, List, Callable, Optional
+from typing import Any, Tuple, List, Callable, Optional, Iterable, Mapping
 import pdb
 import traceback
+import contextlib
 
 import distutils.cmd
 
@@ -20,7 +22,7 @@ from flake8.api import legacy as flake8  # type: ignore
 
 from hypothesis import strategies as st
 
-import contextlib
+from .decl import Singular, Plural
 
 between = lambda from_, to_: st.integers(min_value=from_, max_value=to_)
 ints = st.integers()
@@ -112,8 +114,8 @@ class ReviewProject(distutils.cmd.Command):  # pragma: nocov
             print(f'{issues} issues found.')
 
 
-def hook_uncatched(pm_func: Optional[Callable] = None
-                   ) -> None:  # pragma: nocov
+def hook_uncatched(
+        pm_func: Optional[Callable] = None) -> None:  # pragma: nocov
     """Installs an exception hook that triggers a debugger post-mortem on
     unhandled exceptions.
 
