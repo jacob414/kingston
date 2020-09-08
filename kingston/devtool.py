@@ -2,14 +2,41 @@
 """
 A couple of typical development tools I tend to use..
 """
+import sys
 from typing import Any, Callable, Iterable, Mapping
 
 from itertools import count
-from textwrap import dedent
+import textwrap
+
+import funcy as fy  # type: ignore
 
 
-def out(formatted, **kwargs):
-    print(dedent(formatted.format(**kwargs)))
+class PrintfDebugging(object):
+    """Documentation for PrintfDebugging
+
+    """
+    def __init__(self, say=print):
+        super(PrintfDebugging, self).__init__()
+        self.spaces = ''
+        self.say = say
+
+    def indent(self):
+        self.spaces = self.spaces + '  '
+
+    def dedent(self):
+        self.spaces = self.spaces[-2:]
+
+    def silent(self):
+        self.say = fy.identity
+
+    def loud(self):
+        self.say = print
+
+    def __call__(self, formatted, **kwargs):
+        self.say(self.spaces + textwrap.dedent(formatted.format(**kwargs)))
+
+
+out = PrintfDebugging()
 
 
 class LoopSentinel(object):
@@ -32,7 +59,18 @@ class LoopSentinel(object):
                 self.msgfmt.format(round=cur, limit=self.limit))
 
 
-out = print
+def retryit(question="Retry (Y/n)?", default='Y', **kwargs) -> bool:
+    "Does retryit"
+    while True:
+        answer = input(question.format(**kwargs)).upper()
+        if answer == 'Y':
+            return True
+        elif answer == '':
+            return True
+        elif answer == 'Q':
+            sys.exit(0)
+        else:
+            return False
 
 
 def trial(
@@ -58,10 +96,12 @@ def trial(
         retry = retryit()
 
     if retry:
-        import ipdb
-        ipdb.set_trace()
+        import ipdb  # type: ignore
+        ipdb.set_trace()  # type: ignore
         ret = fn(*params, **kwargs)
         out(f"   retried, was now {ret!r}")
         return ret
     else:
         return f'*{num} failed*'
+
+

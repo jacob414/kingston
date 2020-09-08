@@ -1,22 +1,16 @@
 # yapf
 
-import funcy
-from funcy import flow
-import funcy as fy
+from funcy import flow  # type: ignore
+import funcy as fy  # type: ignore
 
 import types
 import numbers
 import copy
 from functools import singledispatch
-from pysistence import Expando
-from typing import (Any, Mapping, List, Tuple, Iterable, Generator, Callable,
-                    Union, TYPE_CHECKING)
-import inspect
-from inspect import Parameter
+from typing import (Any, Mapping, List, Tuple, Iterable, Sequence, Generator,
+                    Callable, Union, TYPE_CHECKING)
 
-from . import pipelib
 from . import decl
-from .primitives import Narrowable
 
 import itertools
 
@@ -24,7 +18,22 @@ from functools import wraps, update_wrapper
 
 import operator as ops
 
-from .decl import (PRIMTYPES, textual, numeric, isdict, isgen, iseq)
+from .decl import (PRIMTYPES, textual, numeric, isdict, isgen)
+
+
+class Undefined:
+    "Marker class for undefined values."
+
+
+def infinite_item(index: int, default) -> Any:
+    """Sets up a function that will index a sequence but return a marker
+    object if the index is out of bounds.
+
+    """
+    def element_or_default(seq: Sequence) -> Any:
+        return seq[index]
+
+    return flow.ignore(IndexError, default=default)(element_or_default)
 
 
 def unfold_gen(x: Generator[Any, None, None],
@@ -33,7 +42,7 @@ def unfold_gen(x: Generator[Any, None, None],
     the hood)
 
     """
-    res = tuple(funcy.flatten(x, isgen))
+    res = tuple(fy.flatten(x, isgen))
     if TYPE_CHECKING:
         res = cast(Iterable, res)  # pragma: nocov
     return res
@@ -47,21 +56,11 @@ def typename(x: Any) -> str:
     return x is None and 'None' or x.__class__.__name__
 
 
-class XE(Expando):
-    def __getitem__(self: 'XE', attr: str) -> Any:
-        "Support for getting attributes as named string indexes"
-        return getattr(self, attr)
-
-    def iteritems(self: 'XE') -> Mapping[str, Any]:
-        "Does iteritems"
-        return self.to_dict().items()
-
-
 def pubvars(obj: Any) -> Iterable:
     "Returns all public variables except methods"
     if isdict(obj):
         return tuple(obj)
-    if funcy.is_seqcoll(obj) or isinstance(obj, set):
+    if fy.is_seqcoll(obj) or isinstance(obj, set):
         return copy.copy(obj)
     else:
         return [
@@ -88,9 +87,11 @@ def isprim_type(type_):
 
 def num_or_else(cand: Any) -> numbers.Number:
     asint = flow.silent(int)(cand)
-    if decl.numeric(asint): return asint
+    if decl.numeric(asint):
+        return asint
     asfloat = flow.silent(float)(cand)
-    if decl.numeric(asfloat): return asfloat
+    if decl.numeric(asfloat):
+        return asfloat
     return cand
 
 
@@ -111,10 +112,6 @@ def methdispatch(func):
     wrapper.register = dispatcher.register
     update_wrapper(wrapper, func)
     return wrapper
-
-
-class Undefined:
-    "Marker class for undefined values."
 
 
 def primbases(cls):
@@ -194,260 +191,12 @@ def mkclass(name: str, bases: Tuple = (), **clsattrs: Any) -> Any:
     return Gen
 
 
-def params(fn: Callable) -> Mapping[str, Parameter]:
-    return inspect.signature(fn).parameters
-
-
 def arity(fn: Callable) -> int:
     "Returns the number of arguments required by `fn`."
-    return len(params(fn))
+    return len(decl.params(fn))
 
 
 def callinfo(fn: Callable, env: Mapping[str, Any]) -> dict:
     return {
-        'args': [env[name] for name in params(fn)],
+        'args': [env[name] for name in decl.params(fn)],
     }
-
-
-always_tup = funcy.iffy(funcy.complement(funcy.is_seqcont), lambda x: (x, ))
-
-PipeFormatFn = Callable[[Any, None, None], Any]
-
-
-class Piping(pipelib.BasePiping):
-    """Piping objects is for (ab)using Python operator overloading to
-    build small pipeline-DSL's.
-
-    The most basic one will simply refuse to do anything - you have to
-    give it instructions/permissions on everything it's made for ;-).
-
-    """
-    class Fresh(object):
-        "Marker for Piping instances that never has been run"
-        pass
-
-    class Executed(object):
-        "Marker for Piping instances that has been run"
-        pass
-
-    def __init__(self,
-                 seed: Union[tuple, Any] = (),
-                 kind: Callable = map,
-                 format: PipeFormatFn = funcy.identity):  # type: ignore
-        "Initialize a new Piping object."
-        self.reset()
-        self.format = format
-        self.kind = kind
-
-        self.seed = always_tup(seed)
-
-    def reset(self):
-        "Restart this Piping object as if it were new."
-        self.cursor = ()
-        self.ops = ()
-        self.results = {}
-        self.last_result = ()
-
-    def sum(self) -> None:
-        "Does show"
-        print(self.__class__.__name__)
-        textual = (
-            f'kind = {self.kind}, state = {self.state}, seed = {self.seed},'
-            f'cursor = {self.cursor}, last result = {self.last_result}')
-        print(textual)
-
-    @property
-    def now(self):
-        return self.last_result
-
-    def fncompose(self, stepf: Callable, x: Any = None) -> 'Piping':
-        self.queue(stepf, x)
-        return self
-
-    def queue(self, stepf, *x: Any) -> 'Piping':
-        "Does queue"
-        self.ops = (*self.ops, ((stepf, x)))
-        return self
-
-    def run(self, seed, *x: Any) -> Any:
-        "Does do"
-        self.cursor = seed
-        for op, operands in self.ops:
-            if operands:
-                self.cursor = op(*(self.cursor, *operands))
-            else:
-                self.cursor = op(self.cursor)
-        return self.cursor
-
-    @property
-    def state(self):
-        if self.cursor == () and self.last_result == ():
-            return Piping.Fresh
-        elif self.last_result != ():
-            return Piping.Executed
-
-        raise ValueError('Piping: undeterminable state')
-
-    def calc_fmt_param(self, kind, res, params, case):
-        # case = (self.kind, ) + self.seed + self.ops
-        if kind is filter and self.state == Piping.Fresh:
-            # This case is logically obsolete but good for readability.
-            return (res, )
-        elif self.kind is filter:
-            # Always compares against call parameters
-            return params
-        elif kind is map or kind == 'pipe':
-            return (res, )
-
-        raise TypeError('Piping: unknown out parameter scenario')
-
-    def __call__(self, *params: Any) -> Any:
-        """Treating the Pipe as a function calculates the Pipe's result and
-        returns it passed through the return formatting function.
-
-        Unary calls for pipelined function composition behavoiour,
-        binary calls to combine a value with the result of the pipe
-        operations (map/filter/reduce).
-
-        """
-
-        # Calculate case
-        case = (self.kind, ) + self.seed + self.ops + params
-
-        # Decide on operands for this run
-        if self.state == Piping.Fresh:
-            # When the pipeline must be run, prefer parameter but
-            # otherwise seed
-            operands = params or self.seed
-        else:
-            # When a result exist, prefer seed
-            operands = self.seed or params
-
-        # An incorrectly handled pipe is a possibility here
-        if not operands:
-            raise ValueError('Piping: fatal/undeterminable operands')
-
-        try:
-            # Stored, grab this case from results storage
-            res = self.results[case]
-        except KeyError:
-            # This case has not been stored yet
-            res = self.run(*operands)
-
-            # On success:
-            # Store last result in tuple form
-            self.last_result = always_tup(res)
-            # Also store the Piping case.
-            self.results[case] = res
-
-        # Decide on return format
-        format_params = self.calc_fmt_param(self.kind, res, params, case)
-        # Invoke return format function with parameter(s) from above
-        return self.format(*format_params)
-
-
-class ComposePiping(Piping):
-    """Common usage of Piping - the >> operator is the simplest possible
-    function composition. I decided against the | operator since it's
-    needed for logical pipes.
-
-    Most implementations will probably be based of this.
-
-    """
-    def __rshift__(self, stepf: Callable[[Any, None, None], Any]) -> Piping:
-        "Bitwise OR as simple function composition"
-        return self.queue(stepf)
-
-
-class CountPiping(Piping):
-    def __add__(self, value) -> Piping:
-        "Add operation"
-        return self.queue(ops.add, value)
-
-    def __sub__(self, value) -> Piping:
-        "Add operation"
-        return self.queue(ops.sub, value)
-
-    def __mul__(self, value) -> Piping:
-        "Add operation"
-        return self.queue(ops.mul, value)
-
-    def __div__(self, value) -> Piping:
-        "Add operation"
-        return self.queue(ops.truediv, value)
-
-
-def PNot(value_or_stepf: Union[Callable, Any]) -> bool:
-    "Unary negate for `LogicPiping`."
-    if callable(value_or_stepf):
-        stepf = value_or_stepf
-    else:
-        stepf = funcy.identity
-    return funcy.complement(stepf)
-
-
-rcurry = funcy.rcurry
-
-
-class LogicPiping(Piping):
-    def __init__(self,
-                 seed: Union[tuple, Any] = (),
-                 kind: Callable = map,
-                 format: Callable[[Any, None, None], Any] = funcy.identity):
-        "Sensible default, override for advanced use."
-        super().__init__(seed, kind, format)
-        self.truthy = []
-        self.conjunctions = 0
-
-    def logically(self, stepf, conjunction):  # type: ignore
-        self.counter = itertools.count(1)
-        if conjunction:
-            self.conjunctions += 1
-
-        def gate(x):
-            if stepf(x):
-                self.truthy.append(x)
-            else:
-                self.truthy.append(False)
-            return x
-
-        return self.queue(gate)
-
-    def __call__(self, *params: Any) -> Any:
-        self.truthy = []
-        super().__call__(*params)
-        passed = funcy.compact(self.truthy)
-        if len(passed) == self.conjunctions:
-            return self.format(passed[-1])
-        else:
-            return False
-
-    def __eq__(self, value) -> None:
-        "Does __ge__"
-        return self.logically(rcurry(ops.eq)(value), True)
-
-    def __neg__(self, stepf) -> None:
-        "Does __ge__"
-        return self.logically(funcy.complement(stepf), False)
-
-    def __ne__(self, value) -> None:
-        "Does __ge__"
-        return self.logically(rcurry(ops.ne)(value), True)
-
-    def __ge__(self, value) -> None:
-        "Does __ge__"
-        return self.logically(rcurry(ops.ge)(value), True)
-
-    def __gt__(self, value) -> None:
-        "Does __ge__"
-        return self.logically(rcurry(ops.gt)(value), True)
-
-    def __and__(self, stepf: Callable[[Any, None, None], Any]) -> Piping:
-        return self.logically(stepf, True)
-
-    def __floordiv__(self, stepf: Callable[[Any, None, None], Any]) -> Piping:
-        "Aestetics only."
-        return self.__and__(stepf)
-
-    def __or__(self, stepf: Callable[[Any, None, None], Any]) -> Piping:
-        return self.logically(stepf, False)

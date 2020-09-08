@@ -1,7 +1,5 @@
 # yapf
 
-import pytest
-
 from kingston import fsm
 
 

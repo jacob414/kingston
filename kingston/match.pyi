@@ -1,4 +1,3 @@
-from .lang import arity as arity
 from typing import Any, Callable, Iterable, Union
 
 class Mismatch(ValueError): ...

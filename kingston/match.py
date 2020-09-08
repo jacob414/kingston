@@ -1,44 +1,22 @@
 # yapf
+"""
+The Match module
+~~~~~~~~~~~~~~~~
+
+This module implements a technique for pattern matching.
+"""
 
 import os
 
-from typing import (Any, Type, Iterator, Iterable, Tuple, Mapping, Generator,
-                    Callable, Union, Collection, cast)
-from itertools import zip_longest as zip
+from typing import (Any, Type, Iterable, Tuple, Mapping, Callable, Union, Set,
+                    List, Dict, Collection, Sequence, TypeVar, Generic, cast)
 
-import funcy as fy  # type: ignore
-from whatever import _  # type: ignore
-
-from funcy import compact, flatten, walk
 from . import lang
-from . import fsm
-
-import inspect
-from inspect import Parameter
 
 from kingston import decl
 from kingston.decl import box, unbox, Singular
 from kingston import xxx_kind as kind
-
-POSITIONAL = (Parameter.POSITIONAL_ONLY, Parameter.POSITIONAL_OR_KEYWORD)
-KEYWORD = (Parameter.KEYWORD_ONLY, )
-
-
-class Default:
-    "Symbol for a default function to call if no matching was made."
-
-
-class Mismatch(ValueError):
-    pass
-
-
-class Conflict(TypeError):
-    pass
-
-
-class Malformed(ValueError):
-    pass
-
+from kingston.xxx_kind import primparams, xrtype  # type: ignore[attr-defined]
 
 SingularTypeCand = Type[Any]
 ComplexTypeCand = Iterable[SingularTypeCand]
@@ -46,85 +24,39 @@ TypePatternCand = Union[Singular, ComplexTypeCand]
 PatternCand = Union[decl.Singular, Iterable[decl.Singular]]
 FoundPattern = Union[PatternCand, object, Collection[decl.Singular]]
 
-
-class Miss:
-    "Symbol for a non-breaking miss."
-
-
-ispos = lambda p: p.kind in POSITIONAL and p or False
-iskw = lambda p: p.kind in KEYWORD and p or False
+Plural = Union[Set[Any], List[Any], Tuple[Any, ...], Dict[Any, Any]]
+Dualism = Union[Singular, Plural]
 
 
-def primparams(fn: Callable) -> Union[Singular, Tuple[Any]]:
-    "Aproximate type signature of function `fn´ in Python primitive types"
-    fullparams = lang.params(fn)  # type: ignore
-
-    params = lambda: filter(lambda p: p.default is inspect.Signature.empty,
-                            fullparams.values())
-
-    positional = map(_.annotation, filter(ispos, params()))
-    keyword = map(_.annotation, filter(iskw, params()))
-
-    kind = _.kind
-
-    variadic = tuple(... for x in fullparams.values()
-                     if kind(x) == Parameter.VAR_POSITIONAL) + tuple(
-                         Mapping for x in fullparams.values()
-                         if kind(x) == Parameter.VAR_KEYWORD)
-
-    return unbox(tuple(fy.chain(positional, keyword, variadic)))
-
-
-class MatchState(fsm.FSM):
-    """Documentation for MatchState
+class Conflict(TypeError):
+    """Exception raised if a pattern to be matched already have been
+    applied to a `Matcher` instance.
 
     """
-    def __init__(self):
-        super(MatchState, self).__init__('pending')
-        self.hits = 0
-        self.cc = 0
-        self.pc = 0
-        self.peek = None
-        self.cursor = None
-
-    @fsm.state('fastforward')
-    def resolve(self, val):
-        self.hits += 1
-        self.cursor = val
-        return self.transit('fastforward->pending', at=val)
-
-    @fsm.transits('pending->fastforward')
-    def ff_start(self, at):
-        self.ff = at
-        self.cursor = at
-        self.cc += 1
-
-    @fsm.state('fastforward')
-    def is_ff(self):
-        return True
-
-    @fsm.state('fastforward')
-    def ff_step(self):
-        self.cc += 1
-
-    @fsm.state('fastforward')
-    def ff_break(self, val):
-        self.cursor = val
-        self.pc += 1
-        return self.transition('pending', val)
-
-    def sum(self):
-        cursor = '(no cursor)' if self.cursor is None else f"cursor: {self.cursor}"
-        from . import devtool
-
-        print(devtool.out(f"""
-        cc {self.cc}, pc {self.pc},
-        state: {self.state}, {cursor}, peeking at {self.peek},""",
-                          self=self, cursor=cursor))  # yapf: disable
 
 
-def match(cand: PatternCand, pattern: Union[Iterable, Any,
-                                            decl.Singular]) -> bool:
+class Mismatch(ValueError):
+    "Exception to signal matching error in Matcher objects."
+
+
+class Miss:
+    "Symbol for a missed match."
+
+
+class NoNextValue:
+    "Symbol signifying that no more values are available to pattern check for."
+
+
+class NoNextAnchor:
+    "Symbol signifying that no more anchor values exist in a pattern."
+
+
+def match(cand: Any, pattern: Any) -> bool:
+    """*”Primitive”* function that checks an individual value against
+    another. Checking against ``Any`` works as a wildcard and will
+    always result in ``True``.
+
+    """
     cand = kind.cast_to_hashable(cand)
     pattern = kind.cast_to_hashable(pattern)
 
@@ -133,101 +65,162 @@ def match(cand: PatternCand, pattern: Union[Iterable, Any,
     return True if pattern in accepted else False
 
 
-def wildcarded(pairs: Iterator) -> FoundPattern:
-    return cast(FoundPattern,
-                tuple((p_ is Any and Any or c_ for c_, p_ in pairs)))
+peek_nv = lang.infinite_item(1, NoNextValue)  # type: ignore
+peek_na = lang.infinite_item(1, NoNextAnchor)  # type: ignore
 
 
-@fy.curry
-def match_in_level(cand, p_):
-    if wildcarded(zip(cand, box(p_))) == p_:
-        return p_
-    else:
-        return ()
+def move(left: Sequence, pattern: Sequence):
+    # def move(left: Sequence, pattern: Sequence) -> Tuple[SeqOrMiss, SeqOrMiss]:
+    """One step of the pattern matching process. The ``move()`` function
+    will take to sequences (``left``, ``pattern``) that represents the
+    current state of matching and produce a tuple representing the
+    next (``left``, ``pattern``) pair of the pattern matching.
 
+    :param left: Values that haven't been matched yet.
 
-def trynested(cand, pattern):
-    "Search a tree for `pattern`."
-    return compact(flatten(walk(match_in_level(cand), pattern)))
+    :param pattern: Pattern values to match subsequently.
 
+    :return: A pair representing the next step in the matching process.
+    :rtype: Tuple[Sequence,Sequence]
 
-def genmatches(cand: PatternCand,
-               pattern: FoundPattern) -> Generator[Any, None, None]:
-    "Generator that yields sub-patterns found in `pattern`."
-
-    icand, ipattern = box(cand), box(pattern)
-
-    for cval, pval in zip(icand, ipattern):
-        if cand in box(pattern):
-            # Handles the simplest reality
-            yield cand
-        else:
-            if match(cval, pval):
-                yield pval
-                continue
-            elif not match(cval, pval):
-                yield Miss
-                continue
-
-    # later, more expensive option, pattern hides inside a tree
-    deephit = tuple(pv for pv, b in zip(trynested(icand, ipattern), icand)
-                    if match(b, pv))
-    if deephit:
-        yield deephit
-
-
-def matches(
-    cand: Any,
-    pattern: Iterable[Any],
-) -> FoundPattern:
-    """Decides how composite data structures should be matched, performs
-    matching.
-
-    Match failure = raise `Mismatch` exception.
     """
+    VC, AC = len(left), len(pattern)
 
-    icand = box(cand)
-    ipattern = box(pattern)
+    lensum = VC + AC
 
-    if icand == ipattern:
-        return cast(FoundPattern, pattern)
+    if VC == 0 or AC == 0:
+        return Miss, Miss
 
-    if fy.is_seqcoll(cand):
-        cand = cast(Iterable, cand)
+    if pattern == (..., ):
+        return (), ()
 
-    if Any in ipattern and all(
-            match(c_, p_) for c_, p_ in zip(icand, ipattern)):
-        return pattern
+    if type(left) != type(pattern):
+        return Miss, Miss
 
-    for matchcand in genmatches(cand, pattern):
-        wildcard = wildcarded(zip(icand, box(matchcand)))
-        if wildcard == matchcand:
-            return wildcard
-        elif cand == matchcand:
-            return cand
+    V, A = left[0], pattern[0]
 
-    raise Mismatch(
-        f"kingston.match.matches(): Can't find {cand!r} in {pattern!r}")
+    if lensum == 2 and match(V, A):
+        return (), ()
+    elif lensum == 2 and not match(V, A):
+        # abandon
+        return Miss, Miss
+    elif lensum > 2:
+        if match(V, A):
+            # advance
+            return left[1:], pattern[1:]
+        elif A is ...:
+            NV, NA = peek_nv(left), peek_na(pattern)
+            if match(NV, NA):
+                # advance
+                return left[1:], pattern[1:]
+            else:
+                # drag / advance
+                if VC == 1:
+                    # last element -> unload (drop ...)
+                    # 0
+                    return left, pattern[1:]
+                elif VC > 1:
+                    # several elements -> drag (drop one value, keep ...)
+                    return left[1:], pattern
+
+        else:
+            # abandon
+            return Miss, Miss
 
 
-def arg_symbolic(params: Iterable, opts: Mapping):
-    compacted = fy.compact((*params, opts))
-    return tuple((Mapping if type(p) is dict else p) for p in compacted)
+def matches(values: Sequence,
+            patterns: Sequence) -> Union[Sequence, Type[Miss]]:
+    """Tries to match ``values`` from ``patterns``.
+
+    :param values: A sequence of values to match.
+    :param patterns: A sequence of patterns that may match ``values``.
+
+    :return: The pattern that was matched or ``Miss``.
+    :rtype: Union[Sequence, Type[Miss]]
+
+    """
+    for pattern in box(patterns):
+        # Operate on copies ->
+        matched, pending = box(values)[:], box(pattern)[:]
+        while matched or pending:
+            # (-> comsumes the copies)
+            matched, pending = move(matched, pending)
+            if matched is Miss:
+                break
+        if matched is Miss:
+            continue
+        else:
+            return pattern
+
+    return Miss
 
 
 def resolve_pattern(params: Any, opts: Any) -> TypePatternCand:
-    return unbox(arg_symbolic(params, opts))
+    safeboxed = box(unbox(params))
+    return safeboxed if len(opts) == 0 else (*safeboxed, Mapping)
 
 
-class Match(dict):
-    """Multiple dispatch as a callable subclass of `dict`:
+MatchArgT = TypeVar('MatchArgT')
+MatchRetT = TypeVar('MatchRetT')
 
-    Define a mapping of types. Call for an instance, the parameter
-    type should be mapped by `type(obj)` returning a callable that
-    will further process the instance.
+
+class Matcher(dict, Generic[MatchArgT, MatchRetT]):
+    """Common base for all matcher classes.
+
+    Since ``Matcher`` is also ``Generic``, you use it to subtype
+    concrete instances of matchers you implement.
 
     """
+    def signature(self, handler: Callable) -> Sequence:  # pragma: nocov
+        ...
+
+    def callsign(self, args: Sequence[MatchArgT],
+                 kwargs: Mapping[Any, Any]) -> Sequence:  # pragma: nocov
+        ...
+
+    def _raise_on_conflict(self, dispatch):
+        try:
+            conflicting = self[dispatch]
+            raise Conflict(f'Pattern {dispatch} had a previous conflict '
+                           f'{dispatch}={conflicting}')
+        except KeyError:
+            pass
+
+    def case(self, handler: Callable) -> Callable:
+        dispatch = self.signature(handler)
+        self._raise_on_conflict(dispatch)
+        self[dispatch] = handler
+        return handler
+
+    def missed(self, handler: Callable) -> Callable:
+        self[Miss] = handler
+        return handler
+
+    def match(self, args: Sequence, kwargs: Mapping) -> Callable:
+        cand = self.callsign(args, kwargs)
+        key = matches(cand, tuple(self))
+        return self[key]
+
+    def invoke(self, handler: Callable, args: Sequence, kwargs: Mapping):
+        return handler() if lang.arity(handler) == 0 else handler(
+            *box(unbox(args)), **kwargs)
+
+    def __call__(self, *args: Any, **kwargs: Any) -> MatchRetT:
+        try:
+            return self.invoke(self.match(args, kwargs), args, kwargs)
+        except KeyError:
+            try:
+                return self.invoke(self[Miss], args, kwargs)
+            except KeyError:
+                raise Mismatch
+
     def explain(self, out=False):  # pragma: nocov
+        """Development convenience tool -
+
+        creates a summary of what patterns matcher object contain
+        and which functions the matchings map to.
+
+        """
         lines = (f"- A {self.__class__.__name__}", )
         for matching in self:
             fn = self[matching]
@@ -239,97 +232,57 @@ class Match(dict):
         else:
             return text
 
-    @property
-    def __name__(self):
-        return self.__class__.__name__
 
-    def checkpred(self, key: Any, value: Any) -> None:
-        try:
-            key = unbox(key)
-            confl = self[key]
-            raise Conflict(f'Pattern {key} had a previous conflict '
-                           f'{key}={confl}')
-        except KeyError:
-            pass
+class TypeMatcher(Matcher):
+    """Concrete implementation of a type matcher instance.
 
-    def case(self, *args: Any) -> Callable:
-        """Decorator to add a function. The types that will be matched is
-        taken from the signature of the decorated function.
+    If you want to type a type matcher, use standard technique when
+    using ``Generic`` types:
 
-        """
-        fn = fy.first(args)
-        disp = primparams(fn)
-        self.checkpred(disp, None)
-        self[disp] = fn
+    >>> from kingston.match import Matcher, TypeMatcher
+    >>> my_int_matcher:Matcher[int, int] = TypeMatcher({
+    ...    int: lambda x: x+1,
+    ...    str: lambda x: 'str'})
+    >>> my_int_matcher(10)
+    11
+    >>> my_int_matcher(20)
+    21
+    >>> my_int_matcher('foo')  # ok at runtime but fails mypy
+    'str'
+    >>>
+    """
+    def signature(self, handler: Callable) -> Sequence:
+        return cast(Sequence, unbox(primparams(handler)))
 
-        return fn
-
-    def default(self, fn):
-        "Assigns a default matching"
-        self[Default] = fn
-        return fn
-
-    def type_match(self, *params: Any, **opts: Any) -> Any:
-        "Does type_match"
-        T = resolve_pattern(params, opts)
-
-        if fy.is_seqcoll(T):
-            # T = cast(ComplexTypeCand, tuple(type(p) for p in T))
-            T = cast(ComplexTypeCand, kind.xrtype(T))
-        elif T is Mapping:  # keyword arg only
-            pass
-        else:
-            T = type(T)  # type: ignore
-
-        try:
-            key = matches(T, tuple(self))
-        except Mismatch:
-            if Default in self:
-                key = Default
-            else:
-                raise
-
-        call = self[key]
-
-        return call(*box(unbox(params)), **opts)
-
-    def __call__(self, *params: Any, **opts: Any) -> Union[Tuple[Any], Tuple]:
-        "Return the value keyed by the type of parameter `obj`"
-        return self.type_match(*params, **opts)
-
-    def __setitem__(self, key: Any, value: Any) -> None:
-        "Insert new matching, but check for pre-existing matches first."
-        self.checkpred(key, value)
-        super().__setitem__(key, value)
+    def callsign(self, args: Sequence[MatchArgT],
+                 kwargs: Mapping[Any, Any]) -> Sequence:
+        return cast(Sequence[Any], xrtype(resolve_pattern(args, kwargs)))
 
 
-class VMatch(Match):
-    def checkpred(self, key: Any, value: Any) -> None:
-        super().checkpred(key, value)
-        try:
-            key = unbox(key)
-            confl = self[key]
-            raise Conflict(
-                f'Pattern {key} could already be type matched ({confl}).')
-        except KeyError:
-            pass
+class ValueMatcher(Matcher):
+    """Concrete implementation of a value matching instance.
 
-    def value_match(self, *params, **opts):
-        """
-        Match parameters by value
+    If you want to type a type matcher, use standard technique when
+    using ``Generic`` types:
 
-        """
-        fparams = unbox(params)
-        try:
-            key = matches(fparams, tuple(self))
-        except Mismatch:
-            if Default in self:
-                key = Default
-            else:
-                raise
-
-        call = self[key]
-        return call() if lang.arity(call) == 0 else call(*fparams, **opts)
+    >>> from kingston.match import ValueMatcher, Miss
+    >>> my_val_matcher:Matcher[int, str] = ValueMatcher({
+    ...    1: lambda x: 'one!',
+    ...    2: lambda x: 'two!',
+    ...    Miss: lambda x: 'many!'})
+    >>> my_val_matcher(1)
+    'one!'
+    >>> my_val_matcher(2)
+    'two!'
+    >>> my_val_matcher(3)
+    'many!'
+    >>> my_val_matcher('x')  # ok at runtime but fails mypy (& missleading..)
+    'many!'
+    >>>
+    """
+    def callsign(self, args: Sequence[MatchArgT],
+                 kwargs: Mapping[Any, Any]) -> Sequence:
+        return cast(Sequence[Any], unbox(resolve_pattern(args, kwargs)))
 
     def case(self, *params: Any, **opts: Any) -> Callable:
         """Decorator to add a function. The types of the parameters. The types
@@ -337,15 +290,10 @@ class VMatch(Match):
         decorated function.
 
         """
-        def wrap(fn, *xparams, **xopts):
-            self.checkpred(params, None)
-            self[params] = fn
-            return fn
+        def wrap(handler, *xparams, **xopts):
+            dispatch = unbox(params)
+            self._raise_on_conflict(dispatch)
+            self[dispatch] = handler
+            return handler
 
         return wrap
-
-    def __call__(self, *params: Any, **opts: Any) -> Union[Tuple[Any], Tuple]:
-        """
-        Handle call to this instance.
-        """
-        return self.value_match(*params, **opts)

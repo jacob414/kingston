@@ -14,10 +14,10 @@ jsonpickle     = "^1.2"
 patterns       = "^0.3"
 pysistence     = "^0.4.1"
 altered-states = "^1.0"
-flake8 = "^3.7"
-mypy = "^0.770.0"
-pycodestyle = "^2.5"
-pytest = "^5.4"
+flake8         = "^3.7"
+mypy           = "^0.770.0"
+pycodestyle    = "^2.5"
+pytest         = "^5.4"
 
 
 [tool.poetry.dev-dependencies]

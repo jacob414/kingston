@@ -1,15 +1,14 @@
 # yapf
 # strict types
 
-from typing import (Any, Mapping, List, Tuple, Iterable, Generator, Callable,
-                    Union, Set, cast)
+from typing import (Any, Mapping, Callable, Union, Set, cast)
 import numbers
-import collections
-import funcy as fy
+import funcy as fy  # type: ignore
 import types
 import operator
 
-from functools import wraps
+import inspect
+from inspect import Parameter
 
 PRIMTYPES = {int, bool, float, str, set, list, tuple, dict, bytes}
 LISTLIKE = {set, list, tuple}
@@ -31,6 +30,7 @@ isdict = fy.isa(dict)
 isgen = fy.isa(types.GeneratorType)
 iseq = fy.curry(operator.eq)
 
+
 def unbox(x: Any) -> Singular:
     """
     >>> unbox(1)
@@ -42,21 +42,16 @@ def unbox(x: Any) -> Singular:
     >>> unbox((1,2,(3,4)))
     (1, 2, (3, 4))
     """
-    do: Callable[[Any], Any] = lambda x: x[0] if fy.is_seqcoll(x) and len(
-        x) == 1 else x
-
-    if callable(x) and x not in PRIMTYPES:
-        @wraps(x)
-        def decorate(*params: Any, **opts: Any) -> Any:
-            return do(x(*params, **opts))
-
-        return decorate
-    return do(x)
+    return x[0] if fy.is_seqcoll(x) and len(x) == 1 else x
 
 
 def box(x: Any) -> Any:
     return x if type(x) in LISTLIKE else (x, )
 
-def setof(x:Any) -> Set:
+
+def setof(x: Any) -> Set:
     return cast(Set, set(x) if type(x) in LISTLIKE else {x})
 
+
+def params(fn: Callable) -> Mapping[str, Parameter]:
+    return inspect.signature(fn).parameters

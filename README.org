@@ -1,18 +1,128 @@
-* Funcy Kingston
+* Kingston README
 
 I use the excellent [[https://funcy.readthedocs.io/][Funcy]] library for Python a lot. This is my
 collection of extras that I have designed to work closely together
 with funcy. Funcy Kingston (Reference, see [[https://youtu.be/U79o7qwul48][here]]).
 
+[[https://repl.it/@jacob414/kingston][Run on Repl.it]]
+
 Kingston is auto-formatted using [[https://github.com/google/yapf][yapf]].
 
-[[https://repl.it/@jacob414/kingston][Run on Repl.it]]
+** Pattern matching using extended =dict='s
+
+=match.Match= objects are callable objects using a =dict= semantic
+that also matches calls based on the type of the calling parameters:
+
+#+BEGIN_SRC python
+>>> from kingston import match
+>>> foo = match.TypeMatcher({
+...     int: lambda x: x*100,
+...     str: lambda x: f'Hello {x}'
+... })
+>>> foo(10)
+1000
+>>> foo('bar')
+'Hello bar'
+>>>
+#+END_SRC
+
+#+BEGIN_SRC python
+>>> from kingston import match
+>>> foo = match.TypeMatcher({
+...     int: lambda x: x * 100,
+...     str: lambda x: f'Hello {x}',
+...     (int, int): lambda a, b: a + b
+... })
+>>> foo(10)
+1000
+>>> foo('bar')
+'Hello bar'
+>>>
+>>> foo(1, 2)
+3
+>>>
+#+END_SRC
+
+You can use =typing.Any= as a wildcard:
+
+#+BEGIN_SRC python
+>>> from typing import Any
+>>> from kingston import match
+>>> foo = match.TypeMatcher({
+...     int: lambda x: x * 100,
+...     str: (lambda x: f"Hello {x}"),
+...     (int, Any): (lambda num, x: num * x)
+... })
+>>> foo(10)
+1000
+>>> foo('bar')
+'Hello bar'
+>>> foo(3, 'X')
+'XXX'
+>>> foo(10, 10)
+100
+>>>
+#+END_SRC
+
+*** Typing pattern matchers
+
+=match.Match= objects can be typed using Python's standard [[https://docs.python.org/3/library/typing.html][typing]]
+mechanism. It is done using [[https://mypy.readthedocs.io/en/stable/generics.html][Generics]]:
+
+The two subtypes are /[argument type, return type]/.
+
+#+BEGIN_SRC python
+>>> from kingston import match
+>>> foo:match.Matcher[int, int] = match.TypeMatcher({
+...    int: lambda x: x+1,
+...    str: lambda x: 'hello'})
+>>> foo(10)
+11
+>>> foo('bar')  # fails on mypy but would be ok at runtime
+'hello'
+>>>
+#+END_SRC
+
+*** Match by value(s)
+
+=match.ValueMatcher= will use the /values/ of the parameters to do the same
+as as =match.Match=:
+
+#+BEGIN_SRC python
+>>> from kingston import match
+>>> foo = match.ValueMatcher({'x': (lambda: 'An x!'), ('x', 'y'): (lambda x,y: 3*(x+y))})
+>>> foo('x')
+'An x!'
+>>> foo('x', 'y')
+'xyxyxy'
+>>>
+#+END_SRC
+
+Same as with the type matcher above, =typing.Any= works as a wildcard
+with the value matcher as well:
+
+#+BEGIN_SRC python
+>>> from kingston import match
+>>> from typing import Any
+>>> foo = match.ValueMatcher({
+...     'x': lambda x: 'An X!',
+...     ('y', Any): lambda x, y: 3 * (x + y)
+... })
+>>> foo('x')
+'An X!'
+>>> foo('y', 'x')
+'yxyxyx'
+>>>
+#+END_SRC
+
 
 ** Nice things
 
 *** dig()
 
-CSS selector like deep value grabbing from almost any object.
+Deep value grabbing from almost any object. Somewhat inspired by CSS
+selectors, but not very complete. This part of the API is unstable —
+it will (hopefully) be developed further in the future.
 
 #+BEGIN_SRC python
 >>> from kingston import dig
@@ -44,288 +154,50 @@ foop=2:int
 >>>
 #+END_SRC
 
-** Pattern matching using extended =dict='s
 
-=match.Match= objects are callable objects using a =dict= semantic
-that also matches calls based on the type of the calling parameters:
 
-#+BEGIN_SRC python
->>> from kingston import match
->>> foo = match.Match({int: lambda x: x*100, str: lambda x: f'Hello {x}'})
->>> foo(10)
-1000
->>> foo('bar')
-'Hello bar'
->>>
-#+END_SRC
+** Testing tools
+
+Kingston has some testing tools as well. Also, due to Kingston's
+opinionated nature, they are only targeted towards [[https://pytest.org][pytest]].
+
+*** Shortform for pytest.mark.parametrize
+
+I tend to use pytest.mark.parametrize in the same form
+everywhere. Thus I have implemented this short-form:
 
 #+BEGIN_SRC python
->>> from kingston import match
->>> foo = match.Match({
-...     int: lambda x: x * 100,
-...     str: lambda x: f'Hello {x}',
-...     (int, int): lambda a, b: a + b
-... })
->>> foo(10)
-1000
->>> foo('bar')
-'Hello bar'
->>>
->>> foo(1, 2)
-3
->>>
-#+END_SRC
-
-You can use =typing.Any= as a wildcard:
-
-#+BEGIN_SRC python
->>> from typing import Any
->>> from kingston import match
->>> foo = match.Match({
-...     int: lambda x: x * 100,
-...     str: (lambda x: f"Hello {x}"),
-...     (int, Any): (lambda num, x: num * x)
-... })
->>> foo(10)
-1000
->>> foo('bar')
-'Hello bar'
->>> foo(3, 'X')
-'XXX'
->>> foo(10, 10)
-100
+>>> from kingston.testing import fixture
+>>> @fixture.params(
+...     "a, b",
+...     (1, 1),
+...     (2, 2),
+... )
+... def test_dummy_compare(a, b):
+...     assert a == b
 >>>
 #+END_SRC
 
 
-*** Match by value(s)
+*** Doctests as fixtures
 
-=match.VMatch= will use the /values/ of the parameters to do the same
-as as =match.Match=:
-
-#+BEGIN_SRC python
->>> from kingston import match
->>> foo = match.VMatch({'x': (lambda: 'An x!'), ('x', 'y'): (lambda x,y: 3*(x+y))})
->>> foo('x')
-'An x!'
->>> foo('x', 'y')
-'xyxyxy'
->>>
-#+END_SRC
-
-Same as with the type matcher above, =typing.Any= works as a wildcard
-with the value matcher as well:
+There is a test decorator that generates pytest fixtures from a
+function or an object. Use it like this:
 
 #+BEGIN_SRC python
->>> from kingston import match
->>> from typing import Any
->>> foo = match.VMatch({
-...     'x': lambda x: 'An X!',
-...     ('y', Any): lambda x, y: 3 * (x + y)
-... })
->>> foo('x')
-'An X!'
->>> foo('y', 'x')
-'yxyxyx'
+>>> def my_doctested_func():
+...   """
+...   >>> 1 + 1
+...   2
+...   >>> mystring = 'abc'
+...   >>> mystring
+...   'abc'
+...   """
+...   pass
+>>> from kingston.testing import fixture
+>>> @fixture.doctest(my_doctested_func)
+... def test_doctest_my_doctested(doctest):  # fixture name always 'doctest'
+...     res = doctest()
+...     assert res == '', res
 >>>
 #+END_SRC
-
-
-
-** Narrowable collections
-
-Uses indexes to narrow collections to fewer values. You can narrow by
-type, a predicate function or value equality. The return value is
-always a new =Narrowable= derived type from the initial
-value. Therefore, you can chain several narrowing operations in the
-same expression.
-
-Errors raised by the narrowing predicates are considered misses.
-
-Some examples:
-
-*** Narrow by type
-
-#+BEGIN_SRC python
->>> from kingston.primitives import narrowable
->>> narrowable((1,2,3,'foo', 'bar'))[int]
-(1, 2, 3)
->>>
-#+END_SRC
-
-*** Narrow by callable
-
-#+BEGIN_SRC python
->>> from kingston.primitives import narrowable
->>> narrowable((1, 2, 3))[lambda x: x > 1]
-(2, 3)
->>>
->>> narrowable((1,2,3,'foo', 'bar'))[int]
-(1, 2, 3)
->>> narrowable((1,2,3,'foo', 'bar'))[lambda x: x > 1]
-(2, 3)
->>> # Note, swallows ValueError raised by 'foo' > 1 etc
->>>
-#+END_SRC
-
-*** Supress empty iterable objects
-
-#+BEGIN_SRC python
->>> from kingston.primitives import narrowable
->>> narrowable([[1], [2], [], []])[lambda x: x[0]]
-[[1], [2]]
->>>
-#+END_SRC
-
-*** Narrow using exact match
-
-#+BEGIN_SRC python
->>> from kingston.primitives import narrowable
->>> narrowable((1, 2, 3, 'foo'))['foo']
-('foo',)
->>>
-#+END_SRC
-
-*** Narrow using a regexp
-
-#+BEGIN_SRC python
->>> from kingston.primitives import narrowable
->>> import re
->>> narrowable(('foo', 'fom', 'jox', 8, 'fim'))[re.compile('fo.*').match]
-('foo', 'fom')
->>>
-#+END_SRC
-
-*** Combine
-
-#+BEGIN_SRC python
->>> from kingston.primitives import narrowable
->>> narrowable((1,2,3,'foo', 'bar'))[str]['foo']
-('foo',)
->>>
-#+END_SRC
-
-** Go deeper
-
-#+BEGIN_SRC python
->>> from kingston.primitives import narrowable
->>> narrowable((1, 2, 3, (41, 42, 43)))[tuple][0][lambda x: x > 41]
-(42, 43)
->>>
-#+END_SRC
-
-*** No matches found
-
-If no element matches, an empty version of the collection parameter
-will be returned:
-
-#+BEGIN_SRC python
->>> from kingston.primitives import narrowable
->>> narrowable((1,2,3))[lambda x: x > 3]
-()
->>>
-#+END_SRC
-
-
-*** Programmatic class creation
-
-Programmatic creation of arbitrary named classes in module definition,
-add methods using a decorator notation:
-
-#+BEGIN_SRC python
->>> from kingston import lang
->>> mystuff = (('Foo', 1), ('Bar', 2))
->>> for name, num in mystuff: locals()[name] = lang.mkclass(name, **{'num': num})
->>> Foo
-<class 'kingston.lang.Foo'>
->>> Foo.num
-1
->>> \
-... @Foo.classmethod
-... def myclassmethod(cls, x):
-...     return x + 1
->>> Foo.myclassmethod(1)
-2
->>>
->>> \
-... @Foo.staticmethod
-... def mystaticmethod(x, y):
-...     return x + y
->>> Foo.mystaticmethod(1, 2)
-3
->>> \
-... @Foo.method
-... def mymethod(self, x):
-...     self.y = self.num + x
-...     return self.y
->>> foo = Foo()
->>> foo.mymethod(1)
-2
->>> foo.y
-2
->>>
-#+END_SRC
-
-*** kingston module with developer convenience tools
-
-The =kingston.microscope= module contains utilities that aid
-development. It has to ways to inspect live objects:
-
-
-**** Via 'AbneuYAML'
-
-AbneuYAML is /“Almost, but not entirely unlike YAML”/. Objects dumped
-to ‘AbneuYAML’ should be easy to get a visual overview of for humans.
-
-To dump any object:
-
-#+BEGIN_SRC python
->>> from kingston import microscope
->>> class Cls: pass
-...
->>> c = Cls()
->>> c.foo, c.bar = 1, 2
->>> c.sub = Cls()
->>> c.sub.foo, c.sub.bar, c.sub.baz = 3, 4, [1, 2]
->>> encoded = microscope.abneuyaml(c)
->>> print(encoded) #doctest: +ELLIPSIS
-<__main__.Cls object at 0x...>:Cls
-  foo=1:int
-  bar=2:int
-  sub=<__main__.Cls object at 0x...>:Cls
-    foo=3:int
-    bar=4:int
-    baz=[1, 2]:list
->>>
-#+END_SRC
-
-
-** A simple way of creating small DSL's using Python operator overloading.
-
-#+BEGIN_SRC python
->>> from kingston import lang
->>> \
-... class PipingExample(lang.Piping):
-...     def __add__(self, value) -> lang.Piping:
-...         self.queue(lambda a, b: a + b, value)
-...         return self
-...
->>> simplest_pipe = PipingExample(10)
->>> res = simplest_pipe + 10 + 20
->>> res()
-40
->>>
-#+END_SRC
-
-Mostly, you'll want to use the pipe operator to define simple
-composition:
-
-#+BEGIN_SRC python
->>> from kingston import lang
->>> incr = lambda x: x + 1
->>> showr = "It is {}!".format
->>> (lang.ComposePiping(5) >> incr >> incr >> showr)()
-'It is 7!'
->>>
-#+END_SRC
-

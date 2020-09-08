@@ -5,8 +5,6 @@ import pytest
 from altered import E
 
 from kingston import dig
-from kingston import decl
-
 from kingston import testing
 
 from hypothesis import given
@@ -66,14 +64,14 @@ def test_xget_glob_keys_some():
     }, 'f*')) == '[foo=1:int, fx=2:int]'
 
 
-@pytest.mark.parametrize("itr",(
+@pytest.mark.parametrize("itr", (
     ['foo', 'bar', 'fx'],
     ('foo', 'bar', 'fx'),
 ))
 def test_xget_glob_members_some(itr):
     # type: () -> None
     "Should get keys of a sequence/collection"
-    
+
     assert str(dig.xget(itr, 'f*')) == "['foo', 'fx']"
 
 
@@ -130,6 +128,16 @@ def attr() -> dig.Attr:
 def test_attr_eq(attr: dig.Attr) -> None:
     "Should equal"
     assert attr.eq(dig.Attr.infer('foo', 'bar'))
+
+
+def test_attr_op_eq_prim(attr: dig.Attr) -> None:
+    "Should attr_op_eq"
+    assert attr == 'bar'
+
+
+def test_attr_op_eq_prim_attr(attr: dig.Attr) -> None:
+    "Should attr_op_eq"
+    assert attr == dig.Attr.infer('foo', 'bar')
 
 
 def test_attr_typecheck(attr: dig.Attr) -> None:

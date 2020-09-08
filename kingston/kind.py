@@ -1,11 +1,7 @@
 # yapf
 
 from dataclasses import dataclass
-from typing import TypeVar, Generic, Any, Iterable, List, Union, Tuple
-import funcy as fy
-import inspect
-
-from kingston.decl import PRIMTYPES, LISTLIKE, Primitive, Listlike, box, unbox
+from typing import TypeVar, Generic
 
 # See https://github.com/python/mypy/issues/5485
 
@@ -27,4 +23,4 @@ class Box(Generic[T]):
         return self.inner
 
 
-from .xxx_kind import *
+from .xxx_kind import *  # NOQA

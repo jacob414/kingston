@@ -3,6 +3,8 @@
 
 import os
 import kingston
+from kingston import build
+
 import tempfile
 import subprocess
 
@@ -13,8 +15,6 @@ except ImportError:
 
 install = (
     "funcy>=1.10.2",
-    "pysistence>=0.4.1",
-    "patterns>=0.3",
     "jsonpickle>=1.2",
 )  # yapf: disable
 
@@ -40,22 +40,13 @@ except ImportError:
     cmdclass = {}
 
 # Try to convert README to RST using pandoc (allowed to fail).
-long_desc = ''
-try:
-    tmpdir = tempfile.mkdtemp()
-    outpath = os.path.join(tmpdir, 'kingston-README.rst')
-    subprocess.check_call(['pandoc', 'README.org', '-o', outpath])
-    with open(outpath) as fp:
-        long_desc = fp.read()
-except Exception:
-    long_desc = ''  # nothing to do.
 
 setup(
     name='kingston',
     cmdclass=cmdclass,
     version=kingston.__version__,
     description="Some Python nicieties",
-    long_description=long_desc,
+    long_description=build.readme_2_rst(),
     packages=('kingston', ),
     author='Jacob Oscarson',
     author_email='jacob@414soft.com',
@@ -63,6 +54,9 @@ setup(
     tests_require=install+develop,
     extras_require={
         'test': install + develop,
+    },
+    package_data = {
+        'kingston': ['py.typed'],
     },
     url='https://www.414soft.com/kingston',
     license='MIT',
