@@ -31,12 +31,9 @@ pytestmark = pytest.mark.wbox
     (TypeMatcher(), 1, ()),
     ((1,2,3), (1,2,3), (1,2,3)),
 )  # yapf: disable
-def test_match1(value, pattern, expected) -> None:
+def test_match(value, pattern, expected) -> None:
     "Should match_hit"
     match(value, pattern) == expected
-
-
-from kingston import devtool as dt
 
 
 @fixture.params(
