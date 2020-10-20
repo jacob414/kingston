@@ -13,6 +13,9 @@ from kingston.decl import unbox
 from kingston.match import (matches, match, move, Matcher, TypeMatcher,
                             ValueMatcher, Miss, Mismatch, Conflict)
 
+from kingston.match import (matches, match, move, Matcher, TypeMatcher,
+                            ValueMatcher, Miss, Mismatch, Conflict)
+
 from kingston.testing import between, diff_ints, same
 
 pytestmark = pytest.mark.wbox
@@ -30,7 +33,7 @@ pytestmark = pytest.mark.wbox
 )  # yapf: disable
 def test_match1(value, pattern, expected) -> None:
     "Should match_hit"
-    assert match.match(value, pattern) == expected
+    match(value, pattern) == expected
 
 
 from kingston import devtool as dt
@@ -66,11 +69,6 @@ from kingston import devtool as dt
 )  # yapf: disable
 def test_move(l, p, xl, xp) -> None:
     "Should move"
-    # if l == (2, 4) and p == (..., 3):
-    # import ipdb
-    # ipdb.set_trace()
-    # pass
-    print(f"match.altmove({l}, {p}) != ({xl}, {xp})")
     assert move(l, p) == (xl, xp)
 
 
