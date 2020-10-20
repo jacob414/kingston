@@ -58,7 +58,7 @@ setup(
     package_data = {
         'kingston': ['py.typed'],
     },
-    url='https://www.414soft.com/kingston',
+    url='https://github.com/jacob414/kingston',
     license='MIT',
     classifiers=[
         'Programming Language :: Python',
