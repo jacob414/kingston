@@ -1,16 +1,12 @@
-from typing import TypeVar, Generic, Any, Iterable, List
+from typing import Any, Iterable, List, TypeVar
 
-T = TypeVar("T")
+T = TypeVar('T')
 
-from dataclasses import dataclass
-
-@dataclass
-class Box(Generic[T]):
+class Box:
     inner: T
-
     @property
     def unboxed(self) -> T: ...
+    def __init__(self, inner: Any) -> None: ...
 
 def fromiter(objs: Iterable[Any]) -> List[type]: ...
-
 def nick(x: Any) -> str: ...

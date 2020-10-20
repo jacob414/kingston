@@ -1,5 +1,4 @@
 import distutils.cmd
-from contextlib import contextmanager as contextmanager
 from typing import Any, Callable, List, Optional, Tuple
 
 class fixture:

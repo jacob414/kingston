@@ -1,0 +1,47 @@
+{% set name = "kingston" %}
+{% set version = "0.7.0" %}
+
+package:
+  name: "{{ name|lower }}"
+  version: "{{ version }}"
+
+source:
+  git_rev:
+  git_url:
+
+requirements:
+  build:
+    - python
+    - setuptools
+
+  run:
+    - python
+    - funcy
+    - jsonpickle
+
+test:
+  requires:
+    - pytest
+    - pytest-cov
+    - tox
+    - funcy
+    - hypothesis
+    - altered_states
+    - flake8
+    - mypy
+    - pyflakes
+
+  imports:
+    - kingston
+
+about:
+  home: "https://github.com/jacob414/kingston"
+  license: LGPL
+  licencs_file: LICENCE
+  summary: "Opinionated Python support library"
+  doc_url: https://funcy.readthedocs.io/
+  dev_url:
+
+extra:
+  recipe-maintainers:
+    - jacob414

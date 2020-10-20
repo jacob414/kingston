@@ -1,16 +1,28 @@
 # yapf
+"""This module if for reading values from live objects. The general
+idea is that you use a function ``kingston.dig.dig()`` with an object
+and a string. The string is (somewhat) inspired by a CSS selector. It
+specifies how to get a certain sub-element.
+
+The goal is that these spec-strings should be storable for future
+re-use.
+
+This module is a work in progress module and thus subject to change.
+
+"""
+
 
 import hashlib
 import fnmatch
 
-from typing import Any, Iterable
+from typing import Any
 
 from . import lang
+
 from dataclasses import dataclass
 from functools import singledispatch
 
 import funcy as fy
-
 
 @dataclass
 class Attr:
@@ -34,19 +46,11 @@ class Attr:
             "Does _"
             return other.name == obj.name and other == obj
 
-        @eq.register(cls.PrimType)
-        def _(other):
-            "Does _"
-            return other == obj.raw_value
-
         obj.eq = eq
 
         lang.bind_methods(cls, obj)
 
         return obj
-
-    def __init__(self, name, value):
-        self.name = name
 
     @staticmethod
     def isa(other):
@@ -54,9 +58,6 @@ class Attr:
 
     def sibling(self, other):
         return isinstance(other.__class__, Attr.__class__)
-
-    def eq(self, other):
-        return self.eq(self, other)
 
     @classmethod
     def infer(cls, name, value):
@@ -71,22 +72,13 @@ class Attr:
         if self.PrimType is str:
             return str.__str__(self)
 
-        elif self.PrimType is lang.Undefined:
-            return '????'
-
         else:
             return self.PrimType(self)
 
     @property
     def type_name(self):
         "Return name of primitive type"
-
-        # NB: Special case to avoid infinite recursion.
-        if self.PrimType is str:
-            return 'str'
-
-        else:
-            return self.PrimType.__name__
+        return self.PrimType.__name__
 
     def __str__(self):
         return "{}={}:{}".format(self.name, self.raw_value, self.type_name)
@@ -98,13 +90,6 @@ class Attr:
         "Does __hash__"
         value = self.PrimType(self)
         return hashlib.sha1('{}:{}'.format(self.name, value)).hexdigest()
-
-    def __eq__(self, other):
-        if hasattr(other, 'name'):
-            return (other.name == self.name
-                    and other.raw_value == self.raw_value)
-        else:
-            return other == self.raw_value
 
 
 for name, PrimType in (('IntAttr', int),
@@ -119,8 +104,14 @@ for name, PrimType in (('IntAttr', int),
     Attr.infer_types[PrimType] = AttrClass
 
 
-def xget(obj, idx):
-    "Does foo"
+def xget(obj:Any, idx:Any) -> Any:
+    """Single point of entry function to fetch a value / attribute /
+    element from an object.
+
+    :param obj: The object to find attribute / value in.
+    :param idx: Symbolic index.
+
+    """
     if lang.isprimitive(obj):
         return obj
     elif callable(obj):
@@ -147,19 +138,7 @@ def xget(obj, idx):
             return attempt_many()
 
 
-class AttrQuery(tuple):
-    def __new__(cls, parts, *params, **opts):
-        "Does __new__"
-        pt, = lang.primbases(cls)
-        instance = pt.__new__(cls, parts, *params, **opts)
-        return instance
-
-    @staticmethod
-    def from_text(text):
-        return AttrQuery(tuple(text.split('.')))
-
-
-def idig(obj, path):
+def idig(obj:Any, path:Any) -> Any:
     "Recursive query for attributes from `obj` by a sequence spec."
     key = path.pop(0)
     point = xget(obj, key)
@@ -169,7 +148,12 @@ def idig(obj, path):
         return point
 
 
-def dig(obj, path):
-    "Recursive query for attributes from `obj` by string spec."
+def dig(obj:Any, path:str) -> Any:
+    """Dig after object content from object content based on a string
+    spec.
+
+    :param obj: A live object that values should be digged from.
+    :param path: String representation of the *”path”*
+    """
 
     return idig(obj, lang.detect_numbers(path.split('.')))
