@@ -21,18 +21,8 @@ The best way to get started quickly is to read the :ref:`README <readme>`, below
 
    install
    readme
+   changelog
 
-
-Programmers Guide
------------------
-
-Here you can read free-form instroduction articles about typical
-productive ways to user Kingston.
-
-.. toctree::
-   :maxdepth: 2
-
-   advanced
 
 API Reference
 -------------

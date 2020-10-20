@@ -21,5 +21,5 @@ README.org:
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 %: Makefile README.org
-	@python -m kingston.build --readme-from-org
+	@python -m kingston.build --convert-from-org
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)

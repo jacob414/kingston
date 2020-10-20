@@ -5,11 +5,13 @@ import tempfile
 import subprocess
 
 
-def readme_2_rst():
+def org_2_rst(orgsrc):
+    name, *_ = orgsrc.split('.org')
+    name = name.lower()
     try:
         tmpdir = tempfile.mkdtemp()
-        outpath = os.path.join(tmpdir, 'kingston-README.rst')
-        subprocess.check_call(['pandoc', 'README.org', '-o', outpath])
+        outpath = os.path.join(tmpdir, f'kingston-{name}.rst')
+        subprocess.check_call(['pandoc', orgsrc, '-o', outpath])
         with open(outpath) as fp:
             return fp.read()
     except Exception as exc:
@@ -17,16 +19,20 @@ def readme_2_rst():
         return ''  # nothing to do.
 
 
-def readme_from_org():
+def convert_from_org():
     with open('docs/readme.rst', 'w') as fp:
         fp.write(os.linesep.join((
             '.. _readme:', '',
-            readme_2_rst())))
+            org_2_rst('README.org'))))
+    with open('docs/changelog.rst', 'w') as fp:
+        fp.write(os.linesep.join((
+            '.. _changelog:', '',
+            org_2_rst('CHANGELOG.org'))))
 
 
 if __name__ == '__main__':
-    if '--readme-from-org' in sys.argv:
-        readme_from_org()
+    if '--convert-from-org' in sys.argv:
+        convert_from_org()
     else:
         print("kingston.build: use --readme-from-org to examd README.org"
               "into Sphinx docs")
