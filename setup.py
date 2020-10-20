@@ -46,7 +46,7 @@ setup(
     cmdclass=cmdclass,
     version=kingston.__version__,
     description="Some Python nicieties",
-    long_description=build.readme_2_rst(),
+    long_description=build.org_2_rst('README.org'),
     packages=('kingston', ),
     author='Jacob Oscarson',
     author_email='jacob@414soft.com',
