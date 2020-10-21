@@ -28,7 +28,6 @@ def helo():
 
 def test():
     tree = compile(afunc, 'examples.unify', 'single', ast.PyCF_ONLY_AST)
-    full = tuple(ast.walk(tree))
     print(''.join(nodeRep(node) for node in full))
 
 if __name__ == '__main__':
