@@ -1,3 +1,3 @@
-__release__ = '0.7.0'
-__development__ = '0.7.0.beta1'
-__version__ = '0.7.0'
+__release__ = '0.7.1'
+__development__ = '0.7.2'
+__version__ = '0.7.1'
