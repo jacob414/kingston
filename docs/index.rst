@@ -23,6 +23,15 @@ The best way to get started quickly is to read the :ref:`README <readme>`, below
    readme
    changelog
 
+Examples
+-------------
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Examples:
+
+   examples/ormsnackis
+
 
 API Reference
 -------------
