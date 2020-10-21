@@ -3,6 +3,7 @@ import sys
 import os
 import tempfile
 import subprocess
+import glob
 
 
 def org_2_rst(orgsrc):
@@ -20,19 +21,17 @@ def org_2_rst(orgsrc):
 
 
 def convert_from_org():
-    with open('docs/readme.rst', 'w') as fp:
-        fp.write(os.linesep.join((
-            '.. _readme:', '',
-            org_2_rst('README.org'))))
-    with open('docs/changelog.rst', 'w') as fp:
-        fp.write(os.linesep.join((
-            '.. _changelog:', '',
-            org_2_rst('CHANGELOG.org'))))
+    for org in glob.glob('*.org'):
+        name, *_ = org.split('.org')
+        with open(f"docs/{name.lower()}.rst", 'w') as rst:
+            rst.write(
+                os.linesep.join(
+                    (f".. _{name.lower()}:", "", org_2_rst(f"{name}.org"))))
 
 
 if __name__ == '__main__':
     if '--convert-from-org' in sys.argv:
         convert_from_org()
     else:
-        print("kingston.build: use --readme-from-org to examd README.org"
+        print("kingston.build: use --readme-from-org to examd org-mode files"
               "into Sphinx docs")

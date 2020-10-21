@@ -213,3 +213,4 @@ or an object. Use it like this:
    ...     res = doctest()
    ...     assert res == '', res
    >>>
+
