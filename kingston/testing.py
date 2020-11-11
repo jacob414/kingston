@@ -22,11 +22,6 @@ ParameterSet = mark.structures.ParameterSet
 
 from altered import state, E  # type: ignore
 
-import pycodestyle  # type: ignore
-import mypy.api  # type: ignore
-
-from flake8.api import legacy as flake8  # type: ignore
-
 from hypothesis import strategies as st
 
 from .decl import box, unbox, Singular
@@ -112,6 +107,7 @@ class ReviewProject(distutils.cmd.Command):  # pragma: nocov
     @staticmethod
     def lint() -> Tuple[int, str, str]:
         print('     flake8...')
+        from flake8.api import legacy as flake8  # type: ignore
         out, err = io.StringIO(), io.StringIO()
         guide = flake8.get_style_guide()
         with state(sys, stdout=out, stderr=err):
@@ -124,6 +120,8 @@ class ReviewProject(distutils.cmd.Command):  # pragma: nocov
          seem to be written for integration, so:
 
         """
+        import pycodestyle  # type: ignore
+
         print('     pycodestyle...')
         code = 0
         warn, err = io.StringIO(), io.StringIO()
@@ -137,6 +135,7 @@ class ReviewProject(distutils.cmd.Command):  # pragma: nocov
     @staticmethod
     def types() -> Tuple[int, str, str]:
         "Runs MyPy, the standard Python type checker."
+        import mypy.api  # type: ignore
         print('     MyPy...')
         warn, err, code = mypy.api.run(['.'])
         return code, warn, err
