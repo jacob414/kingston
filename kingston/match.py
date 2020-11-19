@@ -211,8 +211,8 @@ class Matcher(dict, Generic[MatchArgT, MatchRetT]):
         except KeyError:
             try:
                 return self.invoke(self[Miss], args, kwargs)
-            except KeyError:
-                raise Mismatch
+            except KeyError as exc:
+                raise Mismatch(f"Mismatched ({args!r}, {kwargs!r})")
 
     def explain(self, out=False):  # pragma: nocov
         """Development convenience tool -
