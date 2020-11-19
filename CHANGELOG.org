@@ -1,5 +1,12 @@
 * Kingston Changelog
 
+** 0.7.3
+
+  - More readable error messages in case of =Mismatch= exception from
+    matchers.
+  - Implemented new notation for matchers as subclasses where cases
+    are declared using a decorator.
+
 ** 0.7.2
 
   - Fix version, incorrect imports in =kingston.testing= could cause
