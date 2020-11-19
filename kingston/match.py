@@ -171,7 +171,8 @@ class Matcher(dict, Generic[MatchArgT, MatchRetT]):
     concrete instances of matchers you implement.
 
     """
-    def signature(self, handler: Callable) -> Sequence:  # pragma: nocov
+    @staticmethod
+    def signature(handler: Callable) -> Sequence:  # pragma: nocov
         ...
 
     def callsign(self, args: Sequence[MatchArgT],
@@ -206,6 +207,12 @@ class Matcher(dict, Generic[MatchArgT, MatchRetT]):
             *box(unbox(args)), **kwargs)
 
     def __call__(self, *args: Any, **kwargs: Any) -> MatchRetT:
+        for cb, deco_case in ((getattr(self, name), getattr(self,
+                                                            name).__case__)
+                              for name in dir(self)
+                              if hasattr(getattr(self, name), '__case__')):
+            self[deco_case] = cb
+
         try:
             return self.invoke(self.match(args, kwargs), args, kwargs)
         except KeyError:
@@ -251,7 +258,8 @@ class TypeMatcher(Matcher):
     'str'
     >>>
     """
-    def signature(self, handler: Callable) -> Sequence:
+    @staticmethod
+    def signature(handler: Callable) -> Sequence:
         return cast(Sequence, unbox(primparams(handler)))
 
     def callsign(self, args: Sequence[MatchArgT],
@@ -297,3 +305,8 @@ class ValueMatcher(Matcher):
             return handler
 
         return wrap
+
+
+def case(func: Callable, getsig=TypeMatcher.signature) -> Callable:
+    func.__case__ = getsig(func)[1:]
+    return func
