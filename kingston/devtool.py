@@ -7,8 +7,12 @@ from typing import Any, Callable, Iterable, Mapping
 
 from itertools import count
 import textwrap
+import hashlib
 
 import funcy as fy  # type: ignore
+
+def fingerprint(obj:Any) -> str:
+    return hashlib.sha1(obj).hexdigest()[0:6]
 
 
 class PrintfDebugging(object):
