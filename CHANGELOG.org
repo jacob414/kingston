@@ -1,5 +1,14 @@
 * Kingston Changelog
 
+** 0.7.2
+
+  - Fix version, incorrect imports in =kingston.testing= could cause
+    false positives in CI settings.
+
+** 0.7.1
+
+  - Fix version, invalid metadata in =setup.py=
+
 ** 0.7.0
 
   - The module =kingston.match= can now do a wildcard match using
