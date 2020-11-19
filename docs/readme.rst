@@ -70,6 +70,34 @@ You can use ``typing.Any`` as a wildcard:
    100
    >>>
 
+You can also subclass type matchers and use a decorator to declare cases
+as methods:
+
+.. code:: python
+
+   >>> from kingston.match import Matcher, TypeMatcher, case
+   >>> from numbers import Number
+   >>> class NumberDescriber(TypeMatcher):
+   ...    @case
+   ...    def describe_one_int(self, one:int) -> str:
+   ...        return "One integer"
+   ...
+   ...    @case
+   ...    def describe_two_ints(self, one:int, two:int) -> str:
+   ...        return "Two integers"
+   ...
+   ...    @case
+   ...    def describe_one_float(self, one:float) -> str:
+   ...        return "One float"
+   >>> my_num_matcher:Matcher[Number, str] = NumberDescriber()
+   >>> my_num_matcher(1)
+   'One integer'
+   >>> my_num_matcher(1, 2)
+   'Two integers'
+   >>> my_num_matcher(1.0)
+   'One float'
+   >>>
+
 Typing pattern matchers
 ~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -123,6 +151,31 @@ with the value matcher as well:
    'An X!'
    >>> foo('y', 'x')
    'yxyxyx'
+   >>>
+
+You can also declare cases as methods in a custom ``ValueMatcher``
+subclass.
+
+Use the function ``value_case()`` to declare value cases. **Note:**
+*imported as a shorthand*:
+
+.. code:: python
+
+   >>> from kingston.match import Matcher, ValueMatcher
+   >>> from kingston.match import value_case as case
+   >>> class SimplestEval(ValueMatcher):
+   ...     @case(Any, '+', Any)
+   ...     def _add(self, a, op, b) -> int:
+   ...         return a + b
+   ...
+   ...     @case(Any, '-', Any)
+   ...     def _sub(self, a, op, b) -> int:
+   ...         return a - b
+   >>> simpl_eval = SimplestEval()
+   >>> simpl_eval(1, '+', 2)
+   3
+   >>> simpl_eval(10, '-', 5)
+   5
    >>>
 
 Nice things
@@ -213,3 +266,4 @@ or an object. Use it like this:
    ...     res = doctest()
    ...     assert res == '', res
    >>>
+
