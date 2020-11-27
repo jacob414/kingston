@@ -145,15 +145,34 @@ def empty_matcher():
     return TypeMatcher()
 
 
+class ASupertype:
+    "A generic object type."
+
+
+class ASubtype(ASupertype):
+    "A subclass type for ASupertype."
+
+
+class AnotherSubtype(ASupertype):
+    "Another subclass type for ASupertype."
+
+
+class Unrelated:
+    "An object type with no superclass"
+
+
 @pytest.fixture
 def tmatch() -> TypeMatcher:
     "A fixture for type matches."
+
     matcher = TypeMatcher({
         int: (lambda x: x + 4),
         str: (lambda s: f"Hello, {s}!"),
         (int, str): (lambda amount, chr_: amount * chr_),
-        (int, Any): (lambda amount, x: [x for n in range(amount)])
-    })
+        (int, Any): (lambda amount, x: [x for n in range(amount)]),
+        ASupertype: lambda x: f"super: {x.__class__.__name__}",
+        ASubtype: lambda x: f"spec: subtype"
+    })  # yapf: disable
 
     @matcher.case
     def its_a_float(x: float):
@@ -199,6 +218,10 @@ def test_tmatch_simple_conflict(tmatch) -> None:
     ( (),                    {'x':1}, 4 ), # only_kwargs
     ( ('a', 'b', 1, 1),      {'c':1}, 3 ), # mix
     ( ([1],),                {},      Mismatch),  # NB: fails type only
+    ( (ASupertype(),),      {},       "super: ASupertype"),
+    ( (ASubtype(),),        {},       "spec: subtype"),
+    ( (AnotherSubtype(),),  {},       "super: AnotherSubtype"),
+    ( (Unrelated(),),       {},       Mismatch),
 )  # yapf: disable
 def test_tmatch_integration(tmatch: TypeMatcher, positional, keyword,
                             expected) -> None:

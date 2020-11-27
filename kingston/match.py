@@ -69,7 +69,7 @@ peek_nv = lang.infinite_item(1, NoNextValue)  # type: ignore
 peek_na = lang.infinite_item(1, NoNextAnchor)  # type: ignore
 
 
-def move(left: Sequence, pattern: Sequence, matchfn: Callable=match):
+def move(left: Sequence, pattern: Sequence, matchfn: Callable = match):
     # def move(left: Sequence, pattern: Sequence) -> Tuple[SeqOrMiss, SeqOrMiss]:
     """One step of the pattern matching process. The ``move()`` function
     will take to sequences (``left``, ``pattern``) that represents the
@@ -131,7 +131,8 @@ def move(left: Sequence, pattern: Sequence, matchfn: Callable=match):
 
 
 def matches(values: Sequence,
-            patterns: Sequence, matchfn: Callable=match) -> Union[Sequence, Type[Miss]]:
+            patterns: Sequence,
+            matchfn: Callable = match) -> Union[Sequence, Type[Miss]]:
     """Tries to match ``values`` from ``patterns``.
 
     :param values: A sequence of values to match.
@@ -173,7 +174,6 @@ class Matcher(dict, Generic[MatchArgT, MatchRetT]):
     concrete instances of matchers you implement.
 
     """
-    matchfn: MatchFunc
     @staticmethod
     def signature(handler: Callable) -> Sequence:  # pragma: nocov
         ...
@@ -242,9 +242,6 @@ class Matcher(dict, Generic[MatchArgT, MatchRetT]):
         else:
             return text
 
-def tmfunc(cand:Any, pattern:Any):
-    return issubclass(cand, pattern)
-
 
 class TypeMatcher(Matcher):
     """Concrete implementation of a type matcher instance.
@@ -291,7 +288,6 @@ class TypeMatcher(Matcher):
     >>>
 
     """
-    matchfn:Callable = lambda cand, pattern: match(cand, pattern) or tmfunc(cand, pattern)
     @staticmethod
     def signature(handler: Callable) -> Sequence:
         return cast(Sequence, unbox(primparams(handler)))
@@ -301,7 +297,7 @@ class TypeMatcher(Matcher):
             return super(TypeMatcher, self).match(args, kwargs)
         except KeyError:
             cand = self.callsign(args, kwargs)
-            key = matches(cand, tuple(self), tmfunc)
+            key = matches(cand, tuple(self), issubclass)
             return self[key]
 
     def callsign(self, args: Sequence[MatchArgT],
@@ -353,7 +349,6 @@ class ValueMatcher(Matcher):
     5
 
     """
-
     def callsign(self, args: Sequence[MatchArgT],
                  kwargs: Mapping[Any, Any]) -> Sequence:
         return cast(Sequence[Any], unbox(resolve_pattern(args, kwargs)))
@@ -372,15 +367,19 @@ class ValueMatcher(Matcher):
 
         return wrap
 
+
 def type_case(func: Callable) -> Callable:
     func.__case__ = TypeMatcher.signature(func)[1:]
     return func
 
+
 # Note: Guess based on what I personally use most.
 case = type_case
 
-def value_case(*values:Any) -> Callable:
-    def wrap(func:Callable):
+
+def value_case(*values: Any) -> Callable:
+    def wrap(func: Callable):
         func.__case__ = values
         return func
+
     return wrap
