@@ -23,7 +23,7 @@ ComplexTypeCand = Iterable[SingularTypeCand]
 TypePatternCand = Union[Singular, ComplexTypeCand]
 PatternCand = Union[decl.Singular, Iterable[decl.Singular]]
 FoundPattern = Union[PatternCand, object, Collection[decl.Singular]]
-
+MatchFunc = Callable[[Any, Any], bool]
 Plural = Union[Set[Any], List[Any], Tuple[Any, ...], Dict[Any, Any]]
 Dualism = Union[Singular, Plural]
 
@@ -69,7 +69,7 @@ peek_nv = lang.infinite_item(1, NoNextValue)  # type: ignore
 peek_na = lang.infinite_item(1, NoNextAnchor)  # type: ignore
 
 
-def move(left: Sequence, pattern: Sequence):
+def move(left: Sequence, pattern: Sequence, matchfn: Callable=match):
     # def move(left: Sequence, pattern: Sequence) -> Tuple[SeqOrMiss, SeqOrMiss]:
     """One step of the pattern matching process. The ``move()`` function
     will take to sequences (``left``, ``pattern``) that represents the
@@ -79,6 +79,8 @@ def move(left: Sequence, pattern: Sequence):
     :param left: Values that haven't been matched yet.
 
     :param pattern: Pattern values to match subsequently.
+
+    :param matchfn: Function that should compare a pair of values.
 
     :return: A pair representing the next step in the matching process.
     :rtype: Tuple[Sequence,Sequence]
@@ -99,18 +101,18 @@ def move(left: Sequence, pattern: Sequence):
 
     V, A = left[0], pattern[0]
 
-    if lensum == 2 and match(V, A):
+    if lensum == 2 and matchfn(V, A):
         return (), ()
-    elif lensum == 2 and not match(V, A):
+    elif lensum == 2 and not matchfn(V, A):
         # abandon
         return Miss, Miss
     elif lensum > 2:
-        if match(V, A):
+        if matchfn(V, A):
             # advance
             return left[1:], pattern[1:]
         elif A is ...:
             NV, NA = peek_nv(left), peek_na(pattern)
-            if match(NV, NA):
+            if matchfn(NV, NA):
                 # advance
                 return left[1:], pattern[1:]
             else:
@@ -129,7 +131,7 @@ def move(left: Sequence, pattern: Sequence):
 
 
 def matches(values: Sequence,
-            patterns: Sequence) -> Union[Sequence, Type[Miss]]:
+            patterns: Sequence, matchfn: Callable=match) -> Union[Sequence, Type[Miss]]:
     """Tries to match ``values`` from ``patterns``.
 
     :param values: A sequence of values to match.
@@ -144,7 +146,7 @@ def matches(values: Sequence,
         matched, pending = box(values)[:], box(pattern)[:]
         while matched or pending:
             # (-> comsumes the copies)
-            matched, pending = move(matched, pending)
+            matched, pending = move(matched, pending, matchfn)
             if matched is Miss:
                 break
         if matched is Miss:
@@ -171,6 +173,7 @@ class Matcher(dict, Generic[MatchArgT, MatchRetT]):
     concrete instances of matchers you implement.
 
     """
+    matchfn: MatchFunc
     @staticmethod
     def signature(handler: Callable) -> Sequence:  # pragma: nocov
         ...
@@ -239,6 +242,9 @@ class Matcher(dict, Generic[MatchArgT, MatchRetT]):
         else:
             return text
 
+def tmfunc(cand:Any, pattern:Any):
+    return issubclass(cand, pattern)
+
 
 class TypeMatcher(Matcher):
     """Concrete implementation of a type matcher instance.
@@ -285,9 +291,18 @@ class TypeMatcher(Matcher):
     >>>
 
     """
+    matchfn:Callable = lambda cand, pattern: match(cand, pattern) or tmfunc(cand, pattern)
     @staticmethod
     def signature(handler: Callable) -> Sequence:
         return cast(Sequence, unbox(primparams(handler)))
+
+    def match(self, args: Sequence, kwargs: Mapping) -> Callable:
+        try:
+            return super(TypeMatcher, self).match(args, kwargs)
+        except KeyError:
+            cand = self.callsign(args, kwargs)
+            key = matches(cand, tuple(self), tmfunc)
+            return self[key]
 
     def callsign(self, args: Sequence[MatchArgT],
                  kwargs: Mapping[Any, Any]) -> Sequence:
@@ -356,7 +371,6 @@ class ValueMatcher(Matcher):
             return handler
 
         return wrap
-
 
 def type_case(func: Callable) -> Callable:
     func.__case__ = TypeMatcher.signature(func)[1:]
