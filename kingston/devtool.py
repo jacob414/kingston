@@ -11,24 +11,30 @@ import hashlib
 
 import funcy as fy  # type: ignore
 
-def fingerprint(obj:Any) -> str:
+
+def fingerprint(obj: Any) -> str:
     return hashlib.sha1(obj).hexdigest()[0:6]
 
 
-class PrintfDebugging(object):
+class PrintfDebugging:
     """Documentation for PrintfDebugging
 
     """
-    def __init__(self, say=print):
-        super(PrintfDebugging, self).__init__()
+    def __init__(self, say=print, indent=2):
         self.spaces = ''
+        self.steps = indent
         self.say = say
 
-    def indent(self):
-        self.spaces = self.spaces + '  '
+    def indent(self, extra=None):
+        if extra is not None:
+            self.steps = extra
+
+        indentation = self.steps * ' '
+
+        self.spaces = self.spaces + indentation
 
     def dedent(self):
-        self.spaces = self.spaces[-2:]
+        self.spaces = self.spaces[:-self.steps]
 
     def silent(self):
         self.say = fy.identity
@@ -107,5 +113,3 @@ def trial(
         return ret
     else:
         return f'*{num} failed*'
-
-
