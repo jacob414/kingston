@@ -292,12 +292,23 @@ class TypeMatcher(Matcher):
     def signature(handler: Callable) -> Sequence:
         return cast(Sequence, unbox(primparams(handler)))
 
+    @staticmethod
+    def match_subtype(type_: Any, against: Any) -> bool:
+        "Does match_subtype"
+        type_ = unbox(type_)
+        if against is Any:
+            return True
+        elif issubclass(type_, against):
+            return True
+
+        return False
+
     def match(self, args: Sequence, kwargs: Mapping) -> Callable:
         try:
             return super(TypeMatcher, self).match(args, kwargs)
         except KeyError:
             cand = self.callsign(args, kwargs)
-            key = matches(cand, tuple(self), issubclass)
+            key = matches(cand, tuple(self), TypeMatcher.match_subtype)
             return self[key]
 
     def callsign(self, args: Sequence[MatchArgT],
