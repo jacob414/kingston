@@ -1,5 +1,11 @@
 * Kingston Changelog
 
+** 0.7.4
+
+  - Implements subtype matching in match.TypeMatcher
+  - More options for devtool.PrintfDebugging
+  - Tiny style fixes
+
 ** 0.7.3
 
   - More readable error messages in case of =Mismatch= exception from
