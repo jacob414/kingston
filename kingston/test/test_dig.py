@@ -5,13 +5,28 @@ import pytest
 from altered import E
 
 from kingston import dig
-from kingston import testing
+from kingston.testing import fixture
 
 from hypothesis import given
 from hypothesis import strategies as st
 
 import math
 from typing import Any
+
+
+@fixture.params("top, path, value",
+  (E(foo=1), "foo", 1),
+  (E(foo=E(bar=1)), "foo.bar", 1),
+  (E(foo=1), "bar", AttributeError),
+  (E(foo=E(baz=1)), "foo.bar", AttributeError),
+)  # yapf: disable
+def test_subattr(top: E, path: str, value: Any) -> None:
+    "Should subattr"
+    if type(value) is not int:
+        with pytest.raises(value):
+            dig.subattr(top, path)
+    else:
+        assert dig.subattr(top, path) == value
 
 
 @given(st.deferred(lambda: st.integers() | st.floats() | st.text()))
@@ -161,13 +176,12 @@ def test_tuple_attr_eq(tup_a: dig.TupleAttr) -> None:
     assert tup_a.eq(dig.TupleAttr.infer('foo', (1, 2, 3)))
 
 
-@testing.fixture.params(
-    "PrimType, value",
-    (int, 1),
-    (tuple, (1, 2)),
-    (float, 1.1),
-    (str, 'abcd'),
-)
+@fixture.params("PrimType, value",
+  (int, 1),
+  (tuple, (1, 2)),
+  (float, 1.1),
+  (str, 'abcd'),
+)  # yapf: disable
 def test_infer(PrimType: type, value: Any) -> None:
     "Should create attribute"
     name = str(type(value))

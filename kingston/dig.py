@@ -11,18 +11,21 @@ This module is a work in progress module and thus subject to change.
 
 """
 
-
 import hashlib
 import fnmatch
 
 from typing import Any
 
 from . import lang
+from .match import Miss
 
 from dataclasses import dataclass
 from functools import singledispatch
 
+from collections import deque
+
 import funcy as fy
+
 
 @dataclass
 class Attr:
@@ -104,7 +107,18 @@ for name, PrimType in (('IntAttr', int),
     Attr.infer_types[PrimType] = AttrClass
 
 
-def xget(obj:Any, idx:Any) -> Any:
+def subattr(obj: Any, path: str) -> Any:
+    left = deque(path.split('.'))
+    attr = obj
+
+    while left:
+        attrname = left.popleft()
+        attr = getattr(attr, attrname)
+
+    return attr
+
+
+def xget(obj: Any, idx: Any) -> Any:
     """Single point of entry function to fetch a value / attribute /
     element from an object.
 
@@ -138,7 +152,7 @@ def xget(obj:Any, idx:Any) -> Any:
             return attempt_many()
 
 
-def idig(obj:Any, path:Any) -> Any:
+def idig(obj: Any, path: Any) -> Any:
     "Recursive query for attributes from `obj` by a sequence spec."
     key = path.pop(0)
     point = xget(obj, key)
@@ -148,7 +162,7 @@ def idig(obj:Any, path:Any) -> Any:
         return point
 
 
-def dig(obj:Any, path:str) -> Any:
+def dig(obj: Any, path: str) -> Any:
     """Dig after object content from object content based on a string
     spec.
 
