@@ -170,4 +170,10 @@ def dig(obj: Any, path: str) -> Any:
     :param path: String representation of the *”path”*
     """
 
+    try:
+        # Most dig operations are simply subattr()
+        return subattr(obj, path)
+    except AttributeError:
+        pass
+
     return idig(obj, lang.detect_numbers(path.split('.')))
