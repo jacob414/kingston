@@ -222,6 +222,7 @@ You might find this better if you want brievity and/or point free
 style.
 
 #+BEGIN_SRC python
+>>> from kingston.aop import Aspects
 >>> given = Aspects({
 ...     (lambda x: x == 1,): lambda x: 1,
 ...     (lambda x: x > 1,): lambda x: x * x
