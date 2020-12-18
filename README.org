@@ -177,6 +177,7 @@ Programming]]".
 You can define aspects using decorators:
 
 #+BEGIN_SRC python
+>>> from kingston.aop import Aspects
 >>> when = Aspects()
 >>>
 #+END_SRC
