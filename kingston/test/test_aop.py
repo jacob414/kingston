@@ -20,8 +20,6 @@ from functools import partial
 
 import funcy as fy
 
-from whatever import _
-
 pytestmark = pytest.mark.bbox
 
 
