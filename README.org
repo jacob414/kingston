@@ -188,6 +188,10 @@ Then declare aspects on the instantiated object:
 >>> @when(lambda x: x == 1, y=lambda y: y == 1)
 ... def labbo(x, y=1):
 ...     return 11
+>>>
+#+END_SRC
+
+#+BEGIN_SRC python
 >>> @when(lambda x: x == 1, z=lambda z: z == 2)
 ... def labbo(x, z=2):
 ...     return 12
@@ -200,6 +204,7 @@ parameter 0 as =1= and a keyword parameter =y=1=:
 #+BEGIN_SRC python
 >>> labbo(1, y=1)
 11
+>>>
 #+END_SRC
 
 Aspect 2 is triggered by parameters ``1, z=2``::
@@ -207,6 +212,7 @@ Aspect 2 is triggered by parameters ``1, z=2``::
 #+BEGIN_SRC python
 >>> labbo(1, z=2)
 12
+>>>
 #+END_SRC
 
 Any other combination of parameters will raise a =AspectNotFound=
@@ -228,6 +234,7 @@ style.
 ...     (lambda x: x == 1,): lambda x: 1,
 ...     (lambda x: x > 1,): lambda x: x * x
 ... })
+>>>
 #+END_SRC
 
 Calls work the same as above:
