@@ -16,7 +16,6 @@ except ImportError:
 install = (
     "funcy>=1.10.2",
     "jsonpickle>=1.2",
-    "pyrsistent>=0.17.3",
 )  # yapf: disable
 
 develop = (

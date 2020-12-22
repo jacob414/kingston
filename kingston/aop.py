@@ -1,3 +1,22 @@
+# yapf
+"""Terse Aspect Oriented Programming
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This module implements a technique for Aspect Oriented Programming
+that tries to keeps the code as terse as possible.
+
+It works in two modes:
+
+  - Decorator syntax: instantiate an ``Aspects`` object and use it as
+    a decorator to declare rules that will invoke an aspect.
+
+  - Pass a ``dict`` to the constructor of an ``Aspect`` with rules
+    defined as a tuple of checking functions and the handler function
+    as a value.
+
+For examples, see the definition of ``Aspects``.
+"""
+
 from typing import Any, Callable, Collection, Mapping, Optional
 import funcy as fy  # type: ignore[import]
 
