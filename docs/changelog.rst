@@ -8,7 +8,7 @@ Kingston Changelog
 0.7.5
 -----
 
--  Implements a terse technique for AOP, ``kingston.aop``.
+-  Implements a mechanism for AOP with terse syntax
 -  Small internal refinements
 
 .. _section-2:
