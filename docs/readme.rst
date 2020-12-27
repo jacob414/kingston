@@ -178,6 +178,93 @@ Use the function ``value_case()`` to declare value cases. **Note:**
    5
    >>>
 
+Aspect Oriented Programming with terse syntax
+---------------------------------------------
+
+Kingston also implement a technique to do
+`AOP <https://en.wikipedia.org/wiki/Aspect-oriented_programming>`__ with
+an opinionated terse syntax that I like. It lives in the
+``kingston.aop`` module.
+
+It's used in two main ways:
+
+With decorators
+~~~~~~~~~~~~~~~
+
+Define an ``=Aspects=`` object as an empty object:
+
+.. code:: python
+
+   >>> from kingston.aop import Aspects
+   >>> when = Aspects()
+   >>>
+
+Then declare your aspects using the object as a decorator:
+
+.. code:: python
+
+   >>> @when(lambda x: x == 1, y=lambda y: y == 1)
+   ... def labbo(x, y=1):
+   ...     return 11
+   >>> @when(lambda x: x == 1, z=lambda z: z == 2)
+   ... def labbo(x, z=2):
+   ...     return 12
+   >>>
+
+Aspect 1 above will be triggered if you call it with positional
+parameter 0 as ``1`` and a keyword parameter ``y=1``:
+
+.. code:: python
+
+   >>> labbo(1, y=1)
+   11
+   >>>
+
+Aspect 2 is triggered by parameters ``1, z=2``:
+
+.. code:: python
+
+   >>> labbo(1, z=2)
+   12
+   >>>
+
+Any other combination of parameters will raise a ``AspectNotFound``
+exception:
+
+.. code:: python
+
+   >>> labbo(123) # doctest: +IGNORE_EXCEPTION_DETAIL
+   Traceback (most recent call last):
+   AspectNotFound
+   >>>
+   >>>
+
+With a mapping of aspects
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You might find this better if you want brievity and/or point free style.
+
+.. code:: python
+
+   >>> given = Aspects({
+   ...     (lambda x: x == 1,): lambda x: 1,
+   ...     (lambda x: x > 1,): lambda x: x * x
+   ... })
+   >>>
+
+Calls work the same as above:
+
+.. code:: python
+
+   >>> given(1)
+   1
+   >>> given(2)
+   4
+   >>> given(0) # doctest: +IGNORE_EXCEPTION_DETAIL
+   Traceback (most recent call last):
+   AspectNotFound
+   >>>
+
 Nice things
 -----------
 
