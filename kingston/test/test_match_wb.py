@@ -170,6 +170,7 @@ def tmatch() -> TypeMatcher:
         str: (lambda s: f"Hello, {s}!"),
         (int, str): (lambda amount, chr_: amount * chr_),
         (int, Any): (lambda amount, x: [x for n in range(amount)]),
+        (int, int, int): lambda a,b,c: [matcher(a), matcher(b), matcher(c)],
         ASupertype: lambda x: f"super: {x.__class__.__name__}",
         ASubtype: lambda x: f"spec: subtype"
     })  # yapf: disable
@@ -218,10 +219,11 @@ def test_tmatch_simple_conflict(tmatch) -> None:
     ( (),                    {'x':1}, 4 ), # only_kwargs
     ( ('a', 'b', 1, 1),      {'c':1}, 3 ), # mix
     ( ([1],),                {},      Mismatch),  # NB: fails type only
-    ( (ASupertype(),),      {},       "super: ASupertype"),
-    ( (ASubtype(),),        {},       "spec: subtype"),
-    ( (AnotherSubtype(),),  {},       "super: AnotherSubtype"),
-    ( (Unrelated(),),       {},       Mismatch),
+    ( (ASupertype(),),       {},      "super: ASupertype"),
+    ( (ASubtype(),),         {},      "spec: subtype"),
+    ( (AnotherSubtype(),),   {},      "super: AnotherSubtype"),
+    ( (Unrelated(),),        {},      Mismatch),
+    ( (1,2,3),               {},      [5,6,7] ),
 )  # yapf: disable
 def test_tmatch_integration(tmatch: TypeMatcher, positional, keyword,
                             expected) -> None:
