@@ -1,5 +1,10 @@
 * Kingston Changelog
 
+** 0.7.6
+
+  - Require that recursive =match.TypeMatcher='s are declared
+    explicitly case by case.
+
 ** 0.7.5
 
   - Implements a mechanism for AOP with terse syntax
