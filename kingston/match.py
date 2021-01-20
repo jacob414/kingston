@@ -11,6 +11,8 @@ import os
 from typing import (Any, Type, Iterable, Tuple, Mapping, Callable, Union, Set,
                     List, Dict, Collection, Sequence, TypeVar, Generic, cast)
 
+import funcy as fy
+
 from . import lang
 
 from kingston import decl
@@ -296,6 +298,8 @@ class TypeMatcher(Matcher):
     def match_subtype(type_: Any, against: Any) -> bool:
         "Does match_subtype"
         type_ = unbox(type_)
+        if fy.is_seqcoll(type_):
+            return issubclass(type(type_), against)
         if against is Any:
             return True
         elif issubclass(type_, against):
