@@ -5,13 +5,21 @@ Kingston Changelog
 
 .. _section-1:
 
+0.7.7
+-----
+
+-  Fix version, fixes an edge case when type matching against sequences
+   with exactly 1 value.
+
+.. _section-2:
+
 0.7.6
 -----
 
 -  Require that recursive ``match.TypeMatcher``'s are declared
    explicitly case by case.
 
-.. _section-2:
+.. _section-3:
 
 0.7.5
 -----
@@ -19,7 +27,7 @@ Kingston Changelog
 -  Implements a mechanism for AOP with terse syntax
 -  Small internal refinements
 
-.. _section-3:
+.. _section-4:
 
 0.7.4
 -----
@@ -28,7 +36,7 @@ Kingston Changelog
 -  More options for devtool.PrintfDebugging
 -  Tiny style fixes
 
-.. _section-4:
+.. _section-5:
 
 0.7.3
 -----
@@ -38,7 +46,7 @@ Kingston Changelog
 -  Implemented new notation for matchers as subclasses where cases are
    declared using a decorator.
 
-.. _section-5:
+.. _section-6:
 
 0.7.2
 -----
@@ -46,14 +54,14 @@ Kingston Changelog
 -  Fix version, incorrect imports in ``kingston.testing`` could cause
    false positives in CI settings.
 
-.. _section-6:
+.. _section-7:
 
 0.7.1
 -----
 
 -  Fix version, invalid metadata in ``setup.py``
 
-.. _section-7:
+.. _section-8:
 
 0.7.0
 -----
@@ -73,7 +81,7 @@ Kingston Changelog
 -  More extensive usage of `MyPy <https://mypy.readthedocs.io/>`__
    gradual typing mechanism.
 
-.. _section-8:
+.. _section-9:
 
 0.6.8
 -----
@@ -82,14 +90,14 @@ Kingston Changelog
 -  ``kingston.testing.trial()`` / ``kingston.testing.retryit()``, moved
    to ``kingston.devtool``.
 
-.. _section-9:
+.. _section-10:
 
 0.6.7
 -----
 
 -  Bugfix in ``kingston.match.Match.case()``
 
-.. _section-10:
+.. _section-11:
 
 0.6.6
 -----
@@ -100,7 +108,7 @@ Kingston Changelog
    `pytest-cov <https://pytest-cov.readthedocs.io/en/latest/>`__
 -  Trimmed code base after coverage analysis
 
-.. _section-11:
+.. _section-12:
 
 0.6.5
 -----
@@ -109,7 +117,7 @@ Kingston Changelog
    using subclasses of ``dict``'s to store patterns and references to
    ``callable``'s.
 
-.. _section-12:
+.. _section-13:
 
 0.6.4
 -----
@@ -118,7 +126,7 @@ Kingston Changelog
 -  Started to use light-weight CI in the form of a GitHub action
    invoking `Tox <https://tox.readthedocs.io/en/latest/>`__.
 
-.. _section-13:
+.. _section-14:
 
 0.6.3
 -----

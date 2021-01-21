@@ -1,5 +1,10 @@
 * Kingston Changelog
 
+** 0.7.7
+
+  - Fix version, fixes an edge case when type matching against
+    sequences with exactly 1 value.
+
 ** 0.7.6
 
   - Require that recursive =match.TypeMatcher='s are declared
