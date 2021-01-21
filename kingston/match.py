@@ -313,19 +313,6 @@ class TypeMatcher(Matcher):
         return cast(Tuple[Callable[..., Any], Sequence[Any]],
                     unbox(primparams(handler)))
 
-    @staticmethod
-    def match_subtype(type_: Any, against: Any) -> bool:
-        "Does match_subtype"
-        type_ = unbox(type_)
-        if fy.is_seqcoll(type_):
-            return issubclass(type(type_), against)
-        if against is Any:
-            return True
-        elif issubclass(type_, against):
-            return True
-
-        return False
-
     def match(self, args: Sequence, kwargs: Mapping) -> Callable:
         try:
             return super(TypeMatcher, self).match(args, kwargs)
