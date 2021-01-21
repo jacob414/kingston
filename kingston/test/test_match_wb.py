@@ -10,8 +10,9 @@ from hypothesis import settings
 from kingston.testing import fixture
 from kingston.decl import unbox
 
-from kingston.match import (matches, match, move, Matcher, TypeMatcher,
-                            ValueMatcher, Miss, Mismatch, Conflict)
+from kingston.match import (match, match_subtype, matches, move, Matcher,
+                            TypeMatcher, ValueMatcher, Miss, Mismatch,
+                            Conflict)
 
 from kingston.match import (matches, match, move, Matcher, TypeMatcher,
                             ValueMatcher, Miss, Mismatch, Conflict)
@@ -34,6 +35,22 @@ pytestmark = pytest.mark.wbox
 def test_match(value, pattern, expected) -> None:
     "Should match_hit"
     assert match(value, pattern) == expected
+
+
+@fixture.params(
+    "value, pattern, expected",
+    (int, int, True),
+    (int, float, False),
+    # (1.0, 5.0, True),
+    ((int, ), tuple, True),
+    ((float, ), list, False),
+    # (int, tuple, False),
+    # ((int, ), list, False),
+    # ((1, ), list, False),
+)
+def test_match_subtype(value, pattern, expected) -> None:
+    "Should match_subtype"
+    assert match_subtype(value, pattern) == expected
 
 
 @fixture.params(

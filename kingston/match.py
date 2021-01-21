@@ -67,6 +67,17 @@ def match(cand: Any, pattern: Any) -> bool:
     return True if pattern in accepted else False
 
 
+def match_subtype(cand: Any, pattern: Any) -> bool:
+    if pattern is Any:
+        return True
+
+    elif fy.is_seqcoll(cand):
+        return issubclass(type(cand), pattern)
+
+    else:
+        return issubclass(cand, pattern)
+
+
 peek_nv = lang.infinite_item(1, NoNextValue)  # type: ignore
 peek_na = lang.infinite_item(1, NoNextAnchor)  # type: ignore
 
@@ -229,7 +240,7 @@ class Matcher(dict, Generic[MatchArgT, MatchRetT]):
         except KeyError:
             try:
                 return self.invoke(self[Miss], args, kwargs)
-            except KeyError as exc:
+            except KeyError:
                 raise Mismatch(f"Mismatched ({args!r}, {kwargs!r})")
 
     def explain(self, out=False):  # pragma: nocov
