@@ -76,6 +76,29 @@ def nick(x: Any) -> str:
     return 'None' if x is None else getattr(T, '__name__', type(x).__name__)
 
 
+def typenick(x: Type) -> str:
+    """Safely get a short 'nickname' of a type. Mainly exist to gracefully
+    handle the edge-case that `typing` types doesn't have a `__name__`
+    attribute.
+
+    >>> typenick(int)
+    'int'
+    >>> typenick(list)
+    'list'
+    >>> from typing import Mapping
+    >>> typenick(Mapping)
+    'typing.Mapping'
+    >>> class Foo: pass
+    >>> typenick(Foo)
+    'Foo'
+    """
+
+    if hasattr(x, '__name__'):
+        return x.__name__
+
+    return str(x)
+
+
 def ispos(p):
     return p if p.kind in POSITIONAL else False
 
