@@ -27,6 +27,9 @@ pytestmark = pytest.mark.wbox
 def test_doctest_nick(doctest):
     assert doctest() == ''
 
+@fixture.doctest(kind.typenick)
+def test_doctest_typenick(doctest):
+    assert doctest() == ''
 
 @fixture.doctest(kind.deepxrtype)
 def test_doctest_deepxrtype(doctest):
