@@ -325,6 +325,17 @@ class TypeMatcher(Matcher):
                  kwargs: Mapping[Any, Any]) -> Sequence:
         return cast(Sequence[Any], xrtype(resolve_pattern(args, kwargs)))
 
+    def __repr__(self) -> str:
+        repkey = (
+
+            lambda key: ','.join(map(kind.xrtype, key))  # type: ignore
+            if fy.is_seqcoll(key) else kind.xrtype(key)
+
+        )  # yapf: disable
+        matchreps = ', '.join(f"match({repkey(key)}):{resp.__name__}"
+                              for key, resp in self.items())
+        return f"<TypeMatcher: {matchreps} >"
+
 
 class ValueMatcher(Matcher):
     """Concrete implementation of a value matching instance.
