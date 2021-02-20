@@ -9,11 +9,26 @@ from itertools import count
 import textwrap
 import hashlib
 
+import pprint
+
 import funcy as fy  # type: ignore
 
 
 def fingerprint(obj: Any) -> str:
     return hashlib.sha1(obj).hexdigest()[0:6]
+
+
+def explore(obj: Any) -> str:
+    """Formats a representaion of any object, also following opaque
+    objects to see what's inside.
+
+    Uses package `jsonpickle` in combination with built-in modules
+    `json` and `pprint`.
+
+    """
+    import jsonpickle as jp
+    from json import loads
+    return pprint.pformat(loads(jp.dumps(obj)))
 
 
 class PrintfDebugging:
