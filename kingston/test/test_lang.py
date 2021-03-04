@@ -204,3 +204,8 @@ def test_primbases() -> None:
         pass
 
     assert lang.primbases(FromPrim) == [int]
+
+@fixture.doctest(lang.replace)
+def test_replace(doctest):
+    res = doctest()
+    assert res == '', res

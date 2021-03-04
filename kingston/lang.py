@@ -95,6 +95,24 @@ def num_or_else(cand: Any) -> numbers.Number:
     return cand
 
 
+def replace(reps: dict, seq: Sequence) -> Sequence:
+    """Simple replacement of values in a sequence. Returns a copy of
+    ``seq`` where all values in ``seq`` that are equal to keys in
+    ``reps`` are replaced by the values in ``reps`` corresponding to
+    that same key.
+
+    >>> replace({1:10, 3:30}, (1, 2, 3, 4, 5))
+    (10, 2, 30, 4, 5)
+
+    The return type is the same as of the parameter ``seq``::
+
+    >>> replace({1:10, 5:50}, [1, 2, 3, 4, 5])
+    [10, 2, 3, 4, 50]
+    """
+    return fy.empty(seq).__class__(
+        map(lambda x: x in reps and reps[x] or x, seq))
+
+
 def detect_numbers(seq: Iterable) -> Iterable:
     return [num_or_else(el) for el in seq]
 
