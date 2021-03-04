@@ -25,7 +25,6 @@ pytestmark = pytest.mark.wbox
 @fixture.params(
     "value, pattern, expected",
     (1, 1, True),
-    (1, Any, True),
     ('x', 1, False),
     (1.1, 1, False),
     (object(), 1, False),

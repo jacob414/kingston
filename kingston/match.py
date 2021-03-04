@@ -55,23 +55,17 @@ class NoNextAnchor:
 
 def match(cand: Any, pattern: Any) -> bool:
     """*”Primitive”* function that checks an individual value against
-    another. Checking against ``Any`` works as a wildcard and will
-    always result in ``True``.
+    another.
 
     """
     cand = kind.cast_to_hashable(cand)
     pattern = kind.cast_to_hashable(pattern)
 
-    accepted = {cand, Any}
-
-    return True if pattern in accepted else False
+    return cand == pattern
 
 
 def match_subtype(cand: Any, pattern: Any) -> bool:
-    if pattern is Any:
-        return True
-
-    elif fy.is_seqcoll(cand):
+    if fy.is_seqcoll(cand):
         return issubclass(type(cand), pattern)
 
     else:
@@ -113,7 +107,10 @@ def move(left: Sequence, pattern: Sequence, matchfn: Callable = match):
 
     V, A = left[0], pattern[0]
 
-    if lensum == 2 and matchfn(V, A):
+    if A is Any:
+        # advance
+        return left[1:], pattern[1:]
+    elif lensum == 2 and matchfn(V, A):
         return (), ()
     elif lensum == 2 and not matchfn(V, A):
         # abandon
