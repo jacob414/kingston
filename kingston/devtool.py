@@ -58,7 +58,14 @@ class PrintfDebugging:
         self.say = print
 
     def __call__(self, formatted, **kwargs):
-        self.say(self.spaces + textwrap.dedent(formatted.format(**kwargs)))
+        try:
+            dedented = textwrap.dedent(formatted)
+        except TypeError:
+            dedented = pprint.pformat(formatted)
+        try:
+            self.say(self.spaces + dedented.format(**kwargs))
+        except AttributeError:
+            self.say(self.spaces + dedented)
 
 
 out = PrintfDebugging()
