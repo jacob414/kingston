@@ -139,6 +139,41 @@ def move(left: Sequence, pattern: Sequence, matchfn: Callable = match):
             return Miss, Miss
 
 
+peek1 = lang.infinite_item(1, NoNextValue)
+
+
+def xmove(matched: Sequence,
+          pending: Sequence,
+          matchfn: Callable = match) -> Tuple[Sequence, Sequence]:
+
+    if 0 in {len(matched), len(pending)}:
+        return Miss, Miss
+
+    value, against = matched[0], pending[0]
+    if against is Any:
+        # forward
+        return matched[1:], pending[1:]
+    elif against is ...:
+        anchor = peek1(pending)
+        if matchfn(peek1(matched), anchor):  # check 1 forward
+            # unload
+            # return matched[min(len(matched), 2
+            #                    ):], pending[min(len(pending), 2):]
+            return matched[min(len(matched), 2):], pending[1:]
+        elif len(pending) - len(matched) == 1:
+            # forward
+            return matched[1:], pending[1:]
+        else:
+            # drag
+            return matched[1:], pending
+        # drag
+        # return matched[1:], pending
+    elif matchfn(value, against):
+        return matched[1:], pending[1:]
+    else:
+        return Miss, Miss
+
+
 def matches(values: Sequence,
             patterns: Sequence,
             matchfn: Callable = match) -> Union[Sequence, Type[Miss]]:

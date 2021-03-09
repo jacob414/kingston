@@ -10,7 +10,7 @@ from hypothesis import settings
 from kingston.testing import fixture
 from kingston.decl import unbox
 
-from kingston.match import (match, match_subtype, matches, move, Matcher,
+from kingston.match import (match, match_subtype, matches, move, xmove, Matcher,
                             TypeMatcher, ValueMatcher, Miss, Mismatch,
                             Conflict)
 
@@ -62,16 +62,17 @@ def test_match_subtype(value, pattern, expected) -> None:
     ((3,), (4,), Miss, Miss),
     # : 1-e-hit
     ((1,2,3), (1,...,3), (2,3), (...,3)),
-    ((2,3), (...,3), (3,), (3,)),
-    ((3,), (3,), (), ()),
+    ((2,3), (...,3), (), (3,)),
+    ((3,), (), Miss, Miss),
     # : 1-e-miss
     ((1,2,4), (1,...,3), (2,4), (...,3)),
-    ((2,4), (...,3), (4,), (...,3,)),
-    ((4,), (...,3), (4,), (3,)),
-    ((4,), (3,), Miss, Miss),
+    ((2,4), (...,3), (4,), (...,3)),
+    ((4,), (...,3), (), (3,)), # ???
+    # ((4,), (3,), Miss, Miss),
+    # ((4,), (3,), Miss, Miss),
     # : sparse-e-hit
     ((1,2,3,4,5,6,7), (1,...,4,...,7), (2,3,4,5,6,7), (...,4,...,7)),
-    ((2,3,4,5,6,7), (...,4,...,7), (3,4,5,6,7), (...,4,...,7)),
+    ((2,3,4,5,6,7), (...,4,...,7), (4,5,6,7), (4,...,7)),
     ((3,4,5,6,7), (...,4,...,7), (4,5,6,7), (4,...,7)),
     ((4,5,6,7), (4,...,7), (5,6,7), (...,7)),
     ((5,6,7), (...,7), (6,7), (...,7)),
@@ -82,7 +83,7 @@ def test_match_subtype(value, pattern, expected) -> None:
 )  # yapf: disable
 def test_move(l, p, xl, xp) -> None:
     "Should move"
-    assert move(l, p) == (xl, xp)
+    assert xmove(l, p) == (xl, xp)
 
 
 @pytest.mark.slow
