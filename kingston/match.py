@@ -155,7 +155,8 @@ def xmove(matched: Sequence,
         return matched[1:], pending[1:]
     elif against is ...:
         anchor = peek1(pending)
-        if matchfn(peek1(matched), anchor):  # check 1 forward
+        if anchor is not NoNextValue and matchfn(peek1(matched),
+                                                 anchor):  # check 1 forward
             # unload
             # return matched[min(len(matched), 2
             #                    ):], pending[min(len(pending), 2):]
