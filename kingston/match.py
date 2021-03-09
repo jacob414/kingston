@@ -141,10 +141,12 @@ def move(left: Sequence, pattern: Sequence, matchfn: Callable = match):
 
 peek1 = lang.infinite_item(1, NoNextValue)
 
+xmove = None
 
-def xmove(matched: Sequence,
-          pending: Sequence,
-          matchfn: Callable = match) -> Tuple[Sequence, Sequence]:
+
+def move(matched: Sequence,
+         pending: Sequence,
+         matchfn: Callable = match) -> Tuple[Sequence, Sequence]:
 
     n_matched, n_pending = len(matched), len(pending)
     unsolved = n_matched + n_pending
@@ -176,6 +178,8 @@ def xmove(matched: Sequence,
             return matched[1:], pending
         # drag
         # return matched[1:], pending
+    elif pending == (..., ):
+        return (), ()
     elif matchfn(value, against):
         return matched[1:], pending[1:]
     else:

@@ -57,6 +57,8 @@ def test_match_subtype(value, pattern, expected) -> None:
     # : naive-hit
     ((1,2), (1,2), (2,), (2,)),
     ((2,), (2,), (), ()),
+    # : trailing ...
+    ((2,), (...,), (), ()),
     # : naive-miss
     ((1,3), (Any,4), (3,), (4,)),
     ((3,), (4,), Miss, Miss),
@@ -86,7 +88,7 @@ def test_match_subtype(value, pattern, expected) -> None:
 )  # yapf: disable
 def test_move(l, p, xl, xp) -> None:
     "Should move"
-    assert xmove(l, p) == (xl, xp)
+    assert move(l, p) == (xl, xp)
 
 
 @pytest.mark.slow
@@ -139,7 +141,7 @@ def test_matches_unary_wildcard_miss(differs: Iterable[int],
       ('x', 'x'),
     ( (1,2,3,4,5), ((1,...,5),) ), # *1-e*
     ( (1,2,3,4,5,6,7,8), ((1,2,3,...,8),) ),  # *multi-e*
-    ( (1,2,3,4,5),((1,2,3,4,...),) ),
+    ( (1,2,3,4,5),((1,2,3,4,...),) ),  # XXX
     ( (1,2,3,4,5,6,7,8), ((1,2,3,...,5,...,8),) )
 )  # yapf: disable
 def test_matches_nary_hits(value: Any, pattern: Iterable) -> None:
