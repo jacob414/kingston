@@ -146,22 +146,29 @@ def xmove(matched: Sequence,
           pending: Sequence,
           matchfn: Callable = match) -> Tuple[Sequence, Sequence]:
 
-    if 0 in {len(matched), len(pending)}:
+    n_matched, n_pending = len(matched), len(pending)
+    unsolved = n_matched + n_pending
+
+    if 0 in {n_matched, n_pending}:
         return Miss, Miss
 
     value, against = matched[0], pending[0]
     if against is Any:
         # forward
         return matched[1:], pending[1:]
-    elif against is ...:
+    elif against is ... and n_matched > 1:
+        # import ipdb
+        # ipdb.set_trace()
+        # pass
         anchor = peek1(pending)
-        if anchor is not NoNextValue and matchfn(peek1(matched),
+        if anchor is not NoNextValue and matchfn(matched[1],
                                                  anchor):  # check 1 forward
             # unload
             # return matched[min(len(matched), 2
             #                    ):], pending[min(len(pending), 2):]
-            return matched[min(len(matched), 2):], pending[1:]
-        elif len(pending) - len(matched) == 1:
+            # return matched[min(n_matched, 2):], pending[1:]
+            return matched[min(n_matched, 2):], pending[min(n_pending, 2):]
+        elif n_pending - n_matched == 1:
             # forward
             return matched[1:], pending[1:]
         else:
