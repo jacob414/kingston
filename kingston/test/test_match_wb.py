@@ -10,7 +10,7 @@ from hypothesis import settings
 from kingston.testing import fixture
 from kingston.decl import unbox
 
-from kingston.match import (match, match_subtype, matches, move, xmove, Matcher,
+from kingston.match import (match, match_subtype, matches, move, Matcher,
                             TypeMatcher, ValueMatcher, Miss, Mismatch,
                             Conflict)
 

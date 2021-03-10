@@ -72,81 +72,15 @@ def match_subtype(cand: Any, pattern: Any) -> bool:
         return issubclass(cand, pattern)
 
 
-peek_nv = lang.infinite_item(1, NoNextValue)  # type: ignore
-peek_na = lang.infinite_item(1, NoNextAnchor)  # type: ignore
-
-
-def move(left: Sequence, pattern: Sequence, matchfn: Callable = match):
-    """One step of the pattern matching process. The ``move()`` function
-    will take to sequences (``left``, ``pattern``) that represents the
-    current state of matching and produce a tuple representing the
-    next (``left``, ``pattern``) pair of the pattern matching.
-
-    :param left: Values that haven't been matched yet.
-
-    :param pattern: Pattern values to match subsequently.
-
-    :param matchfn: Function that should compare a pair of values.
-
-    :return: A pair representing the next step in the matching process.
-    :rtype: Tuple[Sequence,Sequence]
-
-    """
-    VC, AC = len(left), len(pattern)
-
-    lensum = VC + AC
-
-    if VC == 0 or AC == 0:
-        return Miss, Miss
-
-    if pattern == (..., ):
-        return (), ()
-
-    if type(left) != type(pattern):
-        return Miss, Miss
-
-    V, A = left[0], pattern[0]
-
-    if A is Any:
-        # advance
-        return left[1:], pattern[1:]
-    elif lensum == 2 and matchfn(V, A):
-        return (), ()
-    elif lensum == 2 and not matchfn(V, A):
-        # abandon
-        return Miss, Miss
-    elif lensum > 2:
-        if matchfn(V, A):
-            # advance
-            return left[1:], pattern[1:]
-        elif A is ...:
-            NV, NA = peek_nv(left), peek_na(pattern)
-            if matchfn(NV, NA):
-                # advance
-                return left[1:], pattern[1:]
-            else:
-                # drag / advance
-                if VC == 1:
-                    # last element -> unload (drop ...)
-                    # 0
-                    return left, pattern[1:]
-                elif VC > 1:
-                    # several elements -> drag (drop one value, keep ...)
-                    return left[1:], pattern
-
-        else:
-            # abandon
-            return Miss, Miss
-
-
-peek1 = lang.infinite_item(1, NoNextValue)
-
-xmove = None
+peek1 = lang.itempadded(1, NoNextValue)  # type: ignore[attr-defined]
 
 
 def move(matched: Sequence,
          pending: Sequence,
          matchfn: Callable = match) -> Tuple[Sequence, Sequence]:
+
+    if type(matched) != type(pending):
+        return Miss, Miss
 
     n_matched, n_pending = len(matched), len(pending)
     unsolved = n_matched + n_pending
@@ -159,28 +93,17 @@ def move(matched: Sequence,
         # forward
         return matched[1:], pending[1:]
     elif against is ... and n_matched > 1:
-        # import ipdb
-        # ipdb.set_trace()
-        # pass
         anchor = peek1(pending)
-        if anchor is not NoNextValue and matchfn(matched[1],
-                                                 anchor):  # check 1 forward
-            # unload
-            # return matched[min(len(matched), 2
-            #                    ):], pending[min(len(pending), 2):]
-            # return matched[min(n_matched, 2):], pending[1:]
+        if anchor is not NoNextValue and matchfn(matched[1], anchor):
+            # drag/unload
             return matched[min(n_matched, 2):], pending[min(n_pending, 2):]
-        elif n_pending - n_matched == 1:
-            # forward
-            return matched[1:], pending[1:]
         else:
             # drag
             return matched[1:], pending
-        # drag
-        # return matched[1:], pending
     elif pending == (..., ):
         return (), ()
     elif matchfn(value, against):
+        # forward
         return matched[1:], pending[1:]
     else:
         return Miss, Miss
@@ -369,15 +292,20 @@ class TypeMatcher(Matcher):
                  kwargs: Mapping[Any, Any]) -> Sequence:
         return cast(Sequence[Any], xrtype(resolve_pattern(args, kwargs)))
 
+    @staticmethod
+    def responserep(rep: Union[Type, Sequence[Type]]) -> str:
+        if fy.is_seqcoll(rep):
+            return ','.join(
+                map(
+                    kind.typenick,  # type: ignore[attr-defined]
+                    cast(Sequence, rep)))
+        else:
+            return kind.typenick(rep)  # type: ignore[attr-defined]
+
     def __repr__(self) -> str:
-        repkey = (
-
-            lambda key: ','.join(map(kind.xrtype, key))  # type: ignore
-            if fy.is_seqcoll(key) else kind.xrtype(key)
-
-        )  # yapf: disable
-        matchreps = ', '.join(f"match({repkey(key)}):{resp.__name__}"
-                              for key, resp in self.items())
+        matchreps = ', '.join(
+            f"({TypeMatcher.responserep(key)})->{kind.funcnick(resp)}"  # type: ignore[attr-defined]
+            for key, resp in self.items())
         return f"<TypeMatcher: {matchreps} >"
 
 
