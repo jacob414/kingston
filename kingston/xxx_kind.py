@@ -99,6 +99,22 @@ def typenick(x: Type) -> str:
     return str(x)
 
 
+def funcnick(func: Callable) -> str:
+    """Return a reasonable human-readable representation of a callable
+    object. Uses hacks to determine if ``x`` is a ``lambda`` or a ``def``.
+
+    >>> def foo(): pass
+    >>> funcnick(foo)
+    'foo()'
+    >>> funcnick(lambda x: x)
+    'λ'
+    """
+    if '<lambda>' in str(func):
+        return 'λ'
+    else:
+        return f"{func.__name__}()"
+
+
 def ispos(p):
     return p if p.kind in POSITIONAL else False
 
