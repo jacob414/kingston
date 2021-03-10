@@ -31,6 +31,10 @@ def test_doctest_nick(doctest):
 def test_doctest_typenick(doctest):
     assert doctest() == ''
 
+@fixture.doctest(kind.funcnick)
+def test_doctest_typenick(doctest):
+    assert doctest() == ''
+
 @fixture.doctest(kind.deepxrtype)
 def test_doctest_deepxrtype(doctest):
     assert doctest() == ''
