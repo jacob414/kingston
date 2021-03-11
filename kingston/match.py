@@ -41,8 +41,10 @@ class Mismatch(ValueError):
     "Exception to signal matching error in Matcher objects."
 
 
-class Miss:
+class Miss_:
     "Symbol for a missed match."
+
+Miss = (Miss_,)
 
 
 class NoNextValue:
@@ -83,7 +85,6 @@ def move(matched: Sequence,
         return Miss, Miss
 
     n_matched, n_pending = len(matched), len(pending)
-    unsolved = n_matched + n_pending
 
     if 0 in {n_matched, n_pending}:
         return Miss, Miss
@@ -102,16 +103,19 @@ def move(matched: Sequence,
             return matched[1:], pending
     elif pending == (..., ):
         return (), ()
+    elif against is ...:
+        return Miss, Miss
     elif matchfn(value, against):
         # forward
-        return matched[1:], pending[1:]
+        return matched[1:], pending[1:]  # attempt 1
+        # return matched[min(n_matched, 2):], pending[min(n_pending, 2):]
     else:
         return Miss, Miss
 
 
 def matches(values: Sequence,
             patterns: Sequence,
-            matchfn: Callable = match) -> Union[Sequence, Type[Miss]]:
+            matchfn: Callable = match) -> Sequence:
     """Tries to match ``values`` from ``patterns``.
 
     :param values: A sequence of values to match.

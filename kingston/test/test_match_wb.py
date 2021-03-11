@@ -88,7 +88,12 @@ def test_match_subtype(value, pattern, expected) -> None:
 )  # yapf: disable
 def test_move(l, p, xl, xp) -> None:
     "Should move"
-    assert move(l, p) == (xl, xp)
+    def match_no_markers(cand:Any, pattern:Any) -> bool:
+        assert pattern is not Any
+        assert pattern is not ...
+        return match(cand, pattern)
+
+    assert move(l, p, match_no_markers) == (xl, xp)
 
 
 @pytest.mark.slow
