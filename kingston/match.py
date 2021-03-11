@@ -14,11 +14,12 @@ from typing import (Any, Type, Iterable, Tuple, Mapping, Callable, Union, Set,
 import funcy as fy  # type: ignore[import]
 
 from . import lang
-
-from kingston import decl
-from kingston.decl import box, unbox, Singular
-from kingston import xxx_kind as kind
-from kingston.xxx_kind import primparams, xrtype  # type: ignore[attr-defined]
+from . import decl
+from .decl import box, unbox, Singular
+from . import xxx_kind as kind
+from .xxx_kind import funcnick  # type: ignore[attr-defined]
+from .xxx_kind import primparams  # type: ignore[attr-defined]
+from .xxx_kind import xrtype  # type: ignore[attr-defined]
 
 SingularTypeCand = Type[Any]
 ComplexTypeCand = Iterable[SingularTypeCand]
@@ -44,7 +45,8 @@ class Mismatch(ValueError):
 class Miss_:
     "Symbol for a missed match."
 
-Miss = (Miss_,)
+
+Miss = (Miss_, )  # Miss constant, a marker for missed matches
 
 
 class NoNextValue:
@@ -57,12 +59,12 @@ class NoNextAnchor:
 
 def match(cand: Any, pattern: Any) -> bool:
     """*”Primitive”* function that checks an individual value against
-    another.
+    another. The ``match()`` function is *only* responsible for
+    checking two values, matching markers `Any` and `Ellipsis` are
+    handled elsewhere.
 
     """
-    cand = kind.cast_to_hashable(cand)
-    pattern = kind.cast_to_hashable(pattern)
-
+    cand, pattern = kind.cast_to_hashable(cand), kind.cast_to_hashable(pattern)
     return cand == pattern
 
 
@@ -108,7 +110,6 @@ def move(matched: Sequence,
     elif matchfn(value, against):
         # forward
         return matched[1:], pending[1:]  # attempt 1
-        # return matched[min(n_matched, 2):], pending[min(n_pending, 2):]
     else:
         return Miss, Miss
 
@@ -308,7 +309,7 @@ class TypeMatcher(Matcher):
 
     def __repr__(self) -> str:
         matchreps = ', '.join(
-            f"({TypeMatcher.responserep(key)})->{kind.funcnick(resp)}"  # type: ignore[attr-defined]
+            f"({TypeMatcher.responserep(key)})->{funcnick(resp)}"
             for key, resp in self.items())
         return f"<TypeMatcher: {matchreps} >"
 

@@ -224,6 +224,10 @@ def tmatch() -> TypeMatcher:
 
     return matcher
 
+def test_tmatch_repr(tmatch) -> None:
+    "Should tmatch_repr"
+    (repr(tmatch), str(tmatch))
+
 
 def test_tmatch_simple_conflict(tmatch) -> None:
     "Should tmatch_conflict"
