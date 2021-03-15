@@ -88,7 +88,8 @@ def test_match_subtype(value, pattern, expected) -> None:
 )  # yapf: disable
 def test_move(l, p, xl, xp) -> None:
     "Should move"
-    def match_no_markers(cand:Any, pattern:Any) -> bool:
+
+    def match_no_markers(cand: Any, pattern: Any) -> bool:
         assert pattern is not Any
         assert pattern is not ...
         return match(cand, pattern)
@@ -223,10 +224,6 @@ def tmatch() -> TypeMatcher:
         return sum(pos) + sum(kw.values())
 
     return matcher
-
-def test_tmatch_repr(tmatch) -> None:
-    "Should tmatch_repr"
-    (repr(tmatch), str(tmatch))
 
 
 def test_tmatch_simple_conflict(tmatch) -> None:

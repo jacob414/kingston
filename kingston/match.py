@@ -233,6 +233,18 @@ class Matcher(dict, Generic[MatchArgT, MatchRetT]):
         else:
             return text
 
+    def responserep(self, rep: Union[Type, Sequence[Type]],
+                    nickfunc: Callable) -> str:
+        if fy.is_seqcoll(rep):
+            return ','.join(map(nickfunc, cast(Sequence, rep)))
+        else:
+            return nickfunc(rep)
+
+    def descresponses(self, nickfunc: Callable) -> str:
+        return ', '.join(
+            f"({self.responserep(key, nickfunc)})->{funcnick(resp)}"
+            for key, resp in self.items())
+
 
 class TypeMatcher(Matcher):
     """Concrete implementation of a type matcher instance.
@@ -250,6 +262,13 @@ class TypeMatcher(Matcher):
     21
     >>> my_int_matcher('foo')  # ok at runtime but fails mypy
     'str'
+    >>>
+
+    It will try to give a reasonably human representation when
+    inspected:
+
+    >>> my_int_matcher
+    <TypeMatcher: (int)->λ, (str)->λ >
     >>>
 
     You can also subclass type matchers and use a decorator to declare
@@ -297,20 +316,9 @@ class TypeMatcher(Matcher):
                  kwargs: Mapping[Any, Any]) -> Sequence:
         return cast(Sequence[Any], xrtype(resolve_pattern(args, kwargs)))
 
-    @staticmethod
-    def responserep(rep: Union[Type, Sequence[Type]]) -> str:
-        if fy.is_seqcoll(rep):
-            return ','.join(
-                map(
-                    kind.typenick,  # type: ignore[attr-defined]
-                    cast(Sequence, rep)))
-        else:
-            return kind.typenick(rep)  # type: ignore[attr-defined]
-
     def __repr__(self) -> str:
-        matchreps = ', '.join(
-            f"({TypeMatcher.responserep(key)})->{funcnick(resp)}"
-            for key, resp in self.items())
+        nickfunc = kind.typenick  # type: ignore[attr-defined]
+        matchreps = self.descresponses(nickfunc)
         return f"<TypeMatcher: {matchreps} >"
 
 
@@ -333,6 +341,13 @@ class ValueMatcher(Matcher):
     'many!'
     >>> my_val_matcher('x')  # ok at runtime but fails mypy (& missleading..)
     'many!'
+    >>>
+
+    It will try to give a reasonably human representation when
+    inspected:
+
+    >>> my_val_matcher
+    <ValueMatcher: (1)->λ, (2)->λ, (<class 'kingston.match.Miss_'>)->λ >
     >>>
 
     You can also declare cases as methods in a custom ``ValueMatcher``
@@ -375,6 +390,10 @@ class ValueMatcher(Matcher):
             return handler
 
         return wrap
+
+    def __repr__(self) -> str:
+        matchreps = self.descresponses(str)
+        return f"<ValueMatcher: {matchreps} >"
 
 
 def type_case(func: TypeMatcher) -> Callable:
