@@ -25,15 +25,18 @@ class Undefined:
     "Marker class for undefined values."
 
 
-def infinite_item(index: int, default) -> Any:
+def itempadded(index: int, pad:Any) -> Any:
     """Sets up a function that will index a sequence but return a marker
     object if the index is out of bounds.
 
     """
     def element_or_default(seq: Sequence) -> Any:
-        return seq[index]
+        try:
+            return seq[index]
+        except IndexError:
+            return pad
 
-    return flow.ignore(IndexError, default=default)(element_or_default)
+    return element_or_default
 
 
 def unfold_gen(x: Generator[Any, None, None],

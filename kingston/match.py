@@ -14,11 +14,12 @@ from typing import (Any, Type, Iterable, Tuple, Mapping, Callable, Union, Set,
 import funcy as fy  # type: ignore[import]
 
 from . import lang
-
-from kingston import decl
-from kingston.decl import box, unbox, Singular
-from kingston import xxx_kind as kind
-from kingston.xxx_kind import primparams, xrtype  # type: ignore[attr-defined]
+from . import decl
+from .decl import box, unbox, Singular
+from . import xxx_kind as kind
+from .xxx_kind import funcnick  # type: ignore[attr-defined]
+from .xxx_kind import primparams  # type: ignore[attr-defined]
+from .xxx_kind import xrtype  # type: ignore[attr-defined]
 
 SingularTypeCand = Type[Any]
 ComplexTypeCand = Iterable[SingularTypeCand]
@@ -41,8 +42,11 @@ class Mismatch(ValueError):
     "Exception to signal matching error in Matcher objects."
 
 
-class Miss:
+class Miss_:
     "Symbol for a missed match."
+
+
+Miss = (Miss_, )  # Miss constant, a marker for missed matches
 
 
 class NoNextValue:
@@ -55,96 +59,64 @@ class NoNextAnchor:
 
 def match(cand: Any, pattern: Any) -> bool:
     """*”Primitive”* function that checks an individual value against
-    another. Checking against ``Any`` works as a wildcard and will
-    always result in ``True``.
+    another. The ``match()`` function is *only* responsible for
+    checking two values, matching markers `Any` and `Ellipsis` are
+    handled elsewhere.
 
     """
-    cand = kind.cast_to_hashable(cand)
-    pattern = kind.cast_to_hashable(pattern)
-
-    accepted = {cand, Any}
-
-    return True if pattern in accepted else False
+    cand, pattern = kind.cast_to_hashable(cand), kind.cast_to_hashable(pattern)
+    return cand == pattern
 
 
 def match_subtype(cand: Any, pattern: Any) -> bool:
-    if pattern is Any:
-        return True
-
-    elif fy.is_seqcoll(cand):
+    if fy.is_seqcoll(cand):
         return issubclass(type(cand), pattern)
 
     else:
         return issubclass(cand, pattern)
 
 
-peek_nv = lang.infinite_item(1, NoNextValue)  # type: ignore
-peek_na = lang.infinite_item(1, NoNextAnchor)  # type: ignore
+peek1 = lang.itempadded(1, NoNextValue)  # type: ignore[attr-defined]
 
 
-def move(left: Sequence, pattern: Sequence, matchfn: Callable = match):
-    """One step of the pattern matching process. The ``move()`` function
-    will take to sequences (``left``, ``pattern``) that represents the
-    current state of matching and produce a tuple representing the
-    next (``left``, ``pattern``) pair of the pattern matching.
+def move(matched: Sequence,
+         pending: Sequence,
+         matchfn: Callable = match) -> Tuple[Sequence, Sequence]:
 
-    :param left: Values that haven't been matched yet.
-
-    :param pattern: Pattern values to match subsequently.
-
-    :param matchfn: Function that should compare a pair of values.
-
-    :return: A pair representing the next step in the matching process.
-    :rtype: Tuple[Sequence,Sequence]
-
-    """
-    VC, AC = len(left), len(pattern)
-
-    lensum = VC + AC
-
-    if VC == 0 or AC == 0:
+    if type(matched) != type(pending):
         return Miss, Miss
 
-    if pattern == (..., ):
-        return (), ()
+    n_matched, n_pending = len(matched), len(pending)
 
-    if type(left) != type(pattern):
+    if 0 in {n_matched, n_pending}:
         return Miss, Miss
 
-    V, A = left[0], pattern[0]
-
-    if lensum == 2 and matchfn(V, A):
-        return (), ()
-    elif lensum == 2 and not matchfn(V, A):
-        # abandon
-        return Miss, Miss
-    elif lensum > 2:
-        if matchfn(V, A):
-            # advance
-            return left[1:], pattern[1:]
-        elif A is ...:
-            NV, NA = peek_nv(left), peek_na(pattern)
-            if matchfn(NV, NA):
-                # advance
-                return left[1:], pattern[1:]
-            else:
-                # drag / advance
-                if VC == 1:
-                    # last element -> unload (drop ...)
-                    # 0
-                    return left, pattern[1:]
-                elif VC > 1:
-                    # several elements -> drag (drop one value, keep ...)
-                    return left[1:], pattern
-
+    value, against = matched[0], pending[0]
+    if against is Any:
+        # forward
+        return matched[1:], pending[1:]
+    elif against is ... and n_matched > 1:
+        anchor = peek1(pending)
+        if anchor is not NoNextValue and matchfn(matched[1], anchor):
+            # drag/unload
+            return matched[min(n_matched, 2):], pending[min(n_pending, 2):]
         else:
-            # abandon
-            return Miss, Miss
+            # drag
+            return matched[1:], pending
+    elif pending == (..., ):
+        return (), ()
+    elif against is ...:
+        return Miss, Miss
+    elif matchfn(value, against):
+        # forward
+        return matched[1:], pending[1:]  # attempt 1
+    else:
+        return Miss, Miss
 
 
 def matches(values: Sequence,
             patterns: Sequence,
-            matchfn: Callable = match) -> Union[Sequence, Type[Miss]]:
+            matchfn: Callable = match) -> Sequence:
     """Tries to match ``values`` from ``patterns``.
 
     :param values: A sequence of values to match.
@@ -261,6 +233,18 @@ class Matcher(dict, Generic[MatchArgT, MatchRetT]):
         else:
             return text
 
+    def responserep(self, rep: Union[Type, Sequence[Type]],
+                    nickfunc: Callable) -> str:
+        if fy.is_seqcoll(rep):
+            return ','.join(map(nickfunc, cast(Sequence, rep)))
+        else:
+            return nickfunc(rep)
+
+    def descresponses(self, nickfunc: Callable) -> str:
+        return ', '.join(
+            f"({self.responserep(key, nickfunc)})->{funcnick(resp)}"
+            for key, resp in self.items())
+
 
 class TypeMatcher(Matcher):
     """Concrete implementation of a type matcher instance.
@@ -278,6 +262,13 @@ class TypeMatcher(Matcher):
     21
     >>> my_int_matcher('foo')  # ok at runtime but fails mypy
     'str'
+    >>>
+
+    It will try to give a reasonably human representation when
+    inspected:
+
+    >>> my_int_matcher
+    <TypeMatcher: (int)->λ, (str)->λ >
     >>>
 
     You can also subclass type matchers and use a decorator to declare
@@ -326,14 +317,8 @@ class TypeMatcher(Matcher):
         return cast(Sequence[Any], xrtype(resolve_pattern(args, kwargs)))
 
     def __repr__(self) -> str:
-        repkey = (
-
-            lambda key: ','.join(map(kind.xrtype, key))  # type: ignore
-            if fy.is_seqcoll(key) else kind.xrtype(key)
-
-        )  # yapf: disable
-        matchreps = ', '.join(f"match({repkey(key)}):{resp.__name__}"
-                              for key, resp in self.items())
+        nickfunc = kind.typenick  # type: ignore[attr-defined]
+        matchreps = self.descresponses(nickfunc)
         return f"<TypeMatcher: {matchreps} >"
 
 
@@ -356,6 +341,13 @@ class ValueMatcher(Matcher):
     'many!'
     >>> my_val_matcher('x')  # ok at runtime but fails mypy (& missleading..)
     'many!'
+    >>>
+
+    It will try to give a reasonably human representation when
+    inspected:
+
+    >>> my_val_matcher
+    <ValueMatcher: (1)->λ, (2)->λ, (<class 'kingston.match.Miss_'>)->λ >
     >>>
 
     You can also declare cases as methods in a custom ``ValueMatcher``
@@ -398,6 +390,10 @@ class ValueMatcher(Matcher):
             return handler
 
         return wrap
+
+    def __repr__(self) -> str:
+        matchreps = self.descresponses(str)
+        return f"<ValueMatcher: {matchreps} >"
 
 
 def type_case(func: TypeMatcher) -> Callable:

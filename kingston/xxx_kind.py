@@ -87,7 +87,7 @@ def typenick(x: Type) -> str:
     'list'
     >>> from typing import Mapping
     >>> typenick(Mapping)
-    'typing.Mapping'
+    'Mapping'
     >>> class Foo: pass
     >>> typenick(Foo)
     'Foo'
@@ -95,8 +95,11 @@ def typenick(x: Type) -> str:
 
     if hasattr(x, '__name__'):
         return x.__name__
+    text = str(x)
+    if 'typing.' in text:
+        return text.split('.')[-1]
 
-    return str(x)
+    return text
 
 
 def funcnick(func: Callable) -> str:
