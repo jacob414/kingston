@@ -1,5 +1,17 @@
 * Kingston Changelog
 
+** 0.7.8
+   - Slight refactor / yak shave & fix version
+   - Redesigns kingston.match.matches() to ensure that marker values
+     `Any` and `...` are never sent to the comparision function. Fixes
+     seldom triggered edge-case eg when you want to feed values
+     straight to the `re` module.
+   - Implements sensible `str()` and `repr()` handlers for
+     `kingston.match.Matcher` objects.
+   - Shaves off 1 iteration when matching against `...` marker values.
+   - A few internal naming improvements.
+   - Filled in missing typing stub for `kingston.aop`
+
 ** 0.7.7
 
   - Fix version, fixes an edge case when type matching against
