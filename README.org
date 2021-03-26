@@ -178,7 +178,7 @@ It's used in two main ways:
 
 *** With decorators
 
-Define an ==Aspects== object as an empty object:
+Define an =Aspects= object as an empty object:
 
 #+BEGIN_SRC python
 >>> from kingston.aop import Aspects
