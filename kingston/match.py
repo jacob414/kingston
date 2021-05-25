@@ -4,6 +4,16 @@ The Match module
 ~~~~~~~~~~~~~~~~
 
 This module implements a technique for pattern matching.
+
+
+IDEA: Statement-oriented matcher within the same scope:
+with ValueMatcher('sum', 1, 2, 3) as m:
+    with m.case('sum', Any, Any, Any) as _, one, two, three:
+        print(one + two + three)
+    with m.case('avg', ...) as _, *values:
+        print(sum(*values))
+    with.m.miss() as *missed:
+        print('MISS!')
 """
 
 import os
